@@ -1,0 +1,33 @@
+{% set card = course_cards.get(course.id, {}) %}
+<article class="course-card" data-course-card data-title="{{ course.display_name|lower }}" data-status="{{ 'unavailable' if not course.is_available else ('completed' if card.get('total', 0) and card.get('watched', 0) == card.get('total', 0) else ('progress' if card.get('in_progress') else 'new')) }}">
+  <a class="course-cover" href="{{ url_for('course_detail', course_id=course.id) }}" aria-label="Open {{ course.display_name }}">
+    {% if course.thumbnail %}
+      <img src="{{ course.thumbnail }}" alt="" loading="lazy">
+    {% else %}
+      <div class="cover-placeholder cover-tone-{{ (course.id % 4) + 1 }}">
+        <span class="cover-kicker">LOCAL ACADEMY · COURSE {{ '%02d'|format(course.id) }}</span>
+        <span class="cover-monogram">{{ course.display_name[:1]|upper }}</span>
+        <span class="cover-title">{{ course.display_name }}</span>
+        <span class="cover-lines" aria-hidden="true"></span>
+      </div>
+    {% endif %}
+    <span class="cover-status {{ 'is-offline' if not course.is_available else '' }}">{{ 'Offline' if not course.is_available else 'In library' }}</span>
+  </a>
+  <div class="course-card-body">
+    <div class="course-card-topline">
+      {% if course.categories %}<span class="eyebrow">{{ course.categories[0].name }}</span>{% else %}<span class="eyebrow">COURSE</span>{% endif %}
+      <span class="course-card-menu">{{ '%02d'|format(course.id) }}</span>
+    </div>
+    <a class="course-card-title" href="{{ url_for('course_detail', course_id=course.id) }}">{{ course.display_name }}</a>
+    <div class="course-card-meta">
+      {% if course.creators %}<span>{{ course.creators|map(attribute='name')|join(', ') }}</span>{% else %}<span>Personal library</span>{% endif %}
+      <span class="meta-separator">·</span>
+      <span>{{ card.get('total', course.total_files or 0) }} lessons</span>
+      {% if course.total_duration %}<span class="meta-separator">·</span><span>{{ fmt_dur_h(course.total_duration) }}</span>{% endif %}
+    </div>
+    <div class="course-card-progress">
+      <div class="progress-track"><span style="width: {{ card.get('percent', 0) }}%"></span></div>
+      <span>{{ card.get('percent', 0) }}%</span>
+    </div>
+  </div>
+</article>

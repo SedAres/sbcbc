@@ -1,0 +1,122 @@
+{% extends "base.html" %}
+{% block title %}{{ course.display_name }}{% endblock %}
+{% block breadcrumb %}<a href="{{ url_for('courses') }}">Course library</a><span class="context-separator">/</span><span>{{ course.display_name }}</span>{% endblock %}
+{% block content %}
+{% macro file_row(file) %}
+  {% set progress = progress_map.get(file.id) %}
+  <article class="lesson-row {{ 'is-current' if resume_file and resume_file.id == file.id else '' }}" data-lesson-row>
+    <div class="lesson-type-icon type-{{ file.file_type }}" aria-hidden="true">
+      {% if file.file_type == 'video' %}<svg viewBox="0 0 24 24"><path d="M5 4.5h14A1.5 1.5 0 0 1 20.5 6v12a1.5 1.5 0 0 1-1.5 1.5H5A1.5 1.5 0 0 1 3.5 18V6A1.5 1.5 0 0 1 5 4.5Z"/><path d="m10 8 5 4-5 4V8Z"/></svg>
+      {% elif file.file_type == 'audio' %}<svg viewBox="0 0 24 24"><path d="M9 18V5l12-2v13"/><circle cx="6" cy="18" r="3"/><circle cx="18" cy="16" r="3"/></svg>
+      {% elif file.file_type == 'pdf' %}<span>PDF</span>
+      {% elif file.file_type == 'image' %}<svg viewBox="0 0 24 24"><rect x="3.5" y="4.5" width="17" height="15" rx="2"/><circle cx="9" cy="10" r="1.5"/><path d="m4.5 17 5-4 3 2 4-4 3 3"/></svg>
+      {% elif file.file_type == 'html' %}<span>&lt;/&gt;</span>
+      {% elif file.file_type == 'text' %}<svg viewBox="0 0 24 24"><path d="M6 3.5h8l4 4v13H6a2 2 0 0 1-2-2v-13a2 2 0 0 1 2-2Z"/><path d="M14 3.5v5h5M8 13h8M8 16.5h8"/></svg>
+      {% elif file.file_type == 'epub' %}<span>BOOK</span>
+      {% else %}<svg viewBox="0 0 24 24"><path d="M6 3.5h8l4 4v13H6a2 2 0 0 1-2-2v-13a2 2 0 0 1 2-2Z"/><path d="M14 3.5v5h5"/></svg>{% endif %}
+    </div>
+    <a class="lesson-main" href="{{ url_for('play', file_hash=file.file_hash) }}">
+      <span class="lesson-name">{{ file.title }}</span>
+      <span class="lesson-meta">{{ file.file_type|replace('_', ' ')|title }}{% if file.duration %}<span>·</span>{{ fmt_dur(file.duration) }}{% endif %}<span>·</span>{{ fmt_size(file.file_size) }}</span>
+    </a>
+    <div class="lesson-actions">
+      {% if file.video_quality %}<span class="quality-chip">{{ file.video_quality }}</span>{% endif %}
+      {% if progress and progress.completed %}<span class="complete-chip" title="Completed"><svg viewBox="0 0 24 24"><path d="m5 12 4.5 4.5L19 7"/></svg></span>
+      {% elif progress and progress.current_time %}<span class="lesson-progress-label">{{ fmt_dur(progress.current_time) }}</span>{% endif %}
+      <button class="icon-button lesson-menu-button" type="button" data-mark-watched="{{ file.file_hash }}" data-completed="{{ 'true' if progress and progress.completed else 'false' }}" title="{{ 'Mark incomplete' if progress and progress.completed else 'Mark complete' }}" aria-label="{{ 'Mark incomplete' if progress and progress.completed else 'Mark complete' }}">
+        {% if progress and progress.completed %}<svg viewBox="0 0 24 24"><path d="m5 12 4.5 4.5L19 7"/></svg>{% else %}<svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="8.5"/><path d="m8 12 2.6 2.6L16 9"/></svg>{% endif %}
+      </button>
+      <button class="icon-button lesson-menu-button" type="button" data-rename-file="{{ file.file_hash }}" data-old-name="{{ file.title }}" title="Rename lesson" aria-label="Rename lesson"><svg viewBox="0 0 24 24"><path d="m15 5 4 4M4 20l4.5-1 10-10a2.1 2.1 0 0 0-3-3l-10 10L4 20Z"/></svg></button>
+      <a class="lesson-open" href="{{ url_for('play', file_hash=file.file_hash) }}" aria-label="Open {{ file.title }}">Open <span>↗</span></a>
+    </div>
+  </article>
+{% endmacro %}
+
+{% macro render_folder(node) %}
+  <details class="curriculum-folder" open>
+    <summary><span class="folder-summary-icon"><svg viewBox="0 0 24 24"><path d="M3.5 7.5A2 2 0 0 1 5.5 5.5h4l2 2h7A2 2 0 0 1 20.5 9.5v8a2 2 0 0 1-2 2h-13a2 2 0 0 1-2-2v-10Z"/></svg></span><span class="folder-name">{{ node.name }}</span><span class="folder-count">{{ node.file_count }} {{ 'lesson' if node.file_count == 1 else 'lessons' }}</span><span class="folder-duration">{% if node.total_duration %}{{ fmt_dur_h(node.total_duration) }}{% endif %}</span><span class="folder-chevron">⌄</span></summary>
+    <div class="folder-content">
+      {% for file in node.files %}{{ file_row(file) }}{% endfor %}
+      {% for child in node.children %}{{ render_folder(child) }}{% endfor %}
+    </div>
+  </details>
+{% endmacro %}
+
+<section class="course-hero">
+  <div class="course-hero-copy">
+    <div class="course-breadcrumb-label"><a href="{{ url_for('courses') }}">ALL COURSES</a><span>·</span><span>{{ 'AVAILABLE' if course.is_available else 'OFFLINE' }}</span></div>
+    <h1>{{ course.display_name }}<span class="heading-period">.</span></h1>
+    <p class="course-description">{{ course.description or 'A personal course collection. Add a description to give your learning a little context.' }}</p>
+    <div class="course-byline">
+      <div class="avatar-stack">{% for creator in course.creators[:3] %}<span title="{{ creator.name }}">{{ creator.name[:1]|upper }}</span>{% else %}<span>L</span>{% endfor %}</div>
+      <span>{% if course.creators %}{{ course.creators|map(attribute='name')|join(', ') }}{% else %}Your personal course{% endif %}</span>
+      {% if course.categories %}<span class="byline-separator">·</span><a href="{{ url_for('collection_detail', kind='categories', item_id=course.categories[0].id) }}">{{ course.categories[0].name }}</a>{% endif %}
+    </div>
+    <div class="course-hero-actions">
+      {% if resume_file and course.is_available %}<a class="button button-light" href="{{ url_for('play', file_hash=resume_file.file_hash) }}"><span class="button-play">▶</span>{{ 'Resume course' if course_stats.in_progress else 'Start learning' }}</a>{% elif not course.is_available %}<span class="button button-secondary">Folder unavailable</span>{% else %}<button class="button button-secondary" type="button" data-rescan-course><span>↻</span> Scan for lessons</button>{% endif %}
+      <button class="button button-quiet" type="button" data-edit-course><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m15 5 4 4M4 20l4.5-1 10-10a2.1 2.1 0 0 0-3-3l-10 10L4 20Z"/></svg> Edit details</button>
+    </div>
+  </div>
+  <div class="course-hero-art">
+    {% if course.thumbnail %}<img src="{{ course.thumbnail }}" alt="Course artwork">
+    {% else %}<div class="cover-placeholder cover-tone-{{ (course.id % 4) + 1 }}"><span class="cover-kicker">LOCAL ACADEMY · COURSE {{ '%02d'|format(course.id) }}</span><span class="cover-monogram">{{ course.display_name[:1]|upper }}</span><span class="cover-title">{{ course.display_name }}</span><span class="cover-lines" aria-hidden="true"></span></div>{% endif %}
+    <div class="course-cover-shade"></div><span class="course-cover-index">{{ '%02d'|format(course.id) }} <i>/</i> {{ '%02d'|format(course_stats.total) }}</span>
+  </div>
+</section>
+
+<section class="course-overview-strip">
+  <div class="course-overview-stat"><strong>{{ course_stats.total }}</strong><span>Lessons & resources</span></div>
+  <div class="course-overview-stat"><strong>{{ fmt_dur_h(course.total_duration) if course.total_duration else '—' }}</strong><span>Video & audio</span></div>
+  <div class="course-overview-stat"><strong>{{ course_stats.percent }}%</strong><span>Course complete</span></div>
+  <div class="overview-progress"><div class="progress-track"><span style="width: {{ course_stats.percent }}%"></span></div><span>{{ course_stats.watched }} of {{ course_stats.total }} lessons</span></div>
+  <div class="availability-label {{ 'offline' if not course.is_available else '' }}"><i></i>{{ 'Folder unavailable' if not course.is_available else 'Folder connected' }}</div>
+</section>
+
+<div class="course-content-grid">
+  <section class="curriculum-section">
+    <div class="section-heading compact-section-heading"><div><p class="overline">YOUR STUDY PLAN</p><h2>Course content</h2></div><button class="text-button" type="button" data-toggle-folders>Collapse sections</button></div>
+    {% if tree.file_count %}
+      <div class="curriculum-list">
+        {% for file in tree.files %}{{ file_row(file) }}{% endfor %}
+        {% for child in tree.children %}{{ render_folder(child) }}{% endfor %}
+      </div>
+    {% else %}
+      <div class="empty-state curriculum-empty"><div class="empty-icon">＋</div><h3>No lessons found yet</h3><p>Rescan the course folder to discover videos, audio, documents, images, and HTML lessons.</p><button class="button button-secondary" type="button" data-rescan-course>Rescan folder</button></div>
+    {% endif %}
+  </section>
+
+  <aside class="course-side-column">
+    <section class="side-card course-progress-card">
+      <div class="side-card-title"><span class="overline">YOUR PROGRESS</span><span>{{ course_stats.percent }}%</span></div>
+      <div class="large-progress"><span style="width: {{ course_stats.percent }}%"></span></div>
+      <p>{{ course_stats.watched }} of {{ course_stats.total }} lessons complete</p>
+      {% if resume_file and course.is_available %}<a href="{{ url_for('play', file_hash=resume_file.file_hash) }}" class="side-card-link">{{ 'Continue this course' if course_stats.in_progress else 'Begin this course' }} <span>→</span></a>{% endif %}
+    </section>
+    <section class="side-card">
+      <div class="side-card-heading"><h3>About this course</h3><button class="icon-button" type="button" data-edit-course aria-label="Edit course details"><svg viewBox="0 0 24 24"><path d="m15 5 4 4M4 20l4.5-1 10-10a2.1 2.1 0 0 0-3-3l-10 10L4 20Z"/></svg></button></div>
+      <p class="about-text">{{ course.description or 'Add a short description to remember what this course covers.' }}</p>
+      {% if course.creators %}<div class="metadata-group"><span class="metadata-label">INSTRUCTORS</span><div class="chip-list">{% for creator in course.creators %}<a class="metadata-chip" href="{{ url_for('collection_detail', kind='creators', item_id=creator.id) }}">{{ creator.name }}</a>{% endfor %}</div></div>{% endif %}
+      {% if course.categories %}<div class="metadata-group"><span class="metadata-label">CATEGORIES</span><div class="chip-list">{% for category in course.categories %}<a class="metadata-chip" href="{{ url_for('collection_detail', kind='categories', item_id=category.id) }}">{{ category.name }}</a>{% endfor %}</div></div>{% endif %}
+      {% if course.tags %}<div class="metadata-group"><span class="metadata-label">TAGS</span><div class="chip-list">{% for tag in course.tags %}<a class="metadata-chip" href="{{ url_for('collection_detail', kind='tags', item_id=tag.id) }}">{{ tag.name }}</a>{% endfor %}</div></div>{% endif %}
+      <div class="side-card-footer"><a href="{{ url_for('course_settings', course_id=course.id) }}" class="text-button">Course player settings <span>↗</span></a><button class="text-button danger-text" type="button" data-delete-course>Remove course</button></div>
+    </section>
+  </aside>
+</div>
+
+<div class="modal-backdrop" id="edit-course-modal" hidden>
+  <section class="modal-card" role="dialog" aria-modal="true" aria-labelledby="edit-course-title">
+    <div class="modal-heading"><div><p class="overline">COURSE DETAILS</p><h2 id="edit-course-title">Edit course</h2><p>Keep your learning space organized.</p></div><button class="icon-button" type="button" data-close-modal aria-label="Close">×</button></div>
+    <form id="edit-course-form" class="form-stack" data-course-id="{{ course.id }}">
+      <label>Course name<input name="display_name" value="{{ course.display_name }}" required maxlength="255"></label>
+      <label>Description<textarea name="description" rows="4" placeholder="What will you learn?">{{ course.description or '' }}</textarea></label>
+      <label>Cover image <span class="optional-label">URL or upload</span><div class="input-with-action"><input name="thumbnail" id="course-thumbnail" value="{{ course.thumbnail or '' }}" placeholder="https://…"><input type="file" id="course-thumbnail-file" accept="image/png,image/jpeg,image/webp,image/gif" hidden><button class="button button-secondary button-small" type="button" id="upload-course-thumbnail">Upload</button></div></label>
+      <div class="form-two-column"><label>Instructor(s)<input name="creator_names" value="{{ course.creators|map(attribute='name')|join(', ') }}" placeholder="Separate names with commas"></label><label>Categories<input name="category_names" value="{{ course.categories|map(attribute='name')|join(', ') }}" placeholder="Design, Fundamentals"></label></div>
+      <label>Tags<input name="tag_names" value="{{ course.tags|map(attribute='name')|join(', ') }}" placeholder="Beginner, Reference"></label>
+      <div class="modal-actions"><button class="button button-secondary" type="button" data-close-modal>Cancel</button><button class="button button-primary" type="submit">Save details</button></div>
+      <p class="form-error" id="edit-course-error" role="alert" hidden></p>
+    </form>
+  </section>
+</div>
+<div class="toast-region" id="course-toast" aria-live="polite"></div>
+{% endblock %}
+{% block scripts %}<script src="{{ url_for('static', filename='js/course.js') }}" defer></script>{% endblock %}
