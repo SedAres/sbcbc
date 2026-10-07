@@ -1,115 +1,34 @@
 {% extends "base.html" %}
-{% block title %}Overview{% endblock %}
-{% block breadcrumb %}<span class="context-muted">Your campus</span><span class="context-separator">/</span><span>Overview</span>{% endblock %}
+{% block title %}Dashboard{% endblock %}
 {% block content %}
-<section class="page-heading dashboard-heading">
-  <div>
-    <p class="overline">YOUR LEARNING SPACE</p>
-    <h1>Good to see you<span class="heading-period">.</span></h1>
-    <p class="page-subtitle">Pick up a lesson or make room for something new.</p>
-  </div>
-  <button class="button button-primary" type="button" data-open-add>
-    <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg>
-    Add a course
-  </button>
-</section>
+<section class="page-heading dashboard-heading"><div><h1>{{ 'Welcome back to your campus.' if stats.courses else 'A space for your next chapter.' }}</h1><p class="page-subtitle">Your courses, your curiosity. A little progress, every day.</p></div><div class="heading-actions"><span class="today-date">{{ today_label }}</span><button class="button button-primary" type="button" data-open-add>{{ icon('plus') }}Add a course</button></div></section>
 
-{% if continue_learning %}
-  {% set featured = continue_learning[0] %}
-  <section class="featured-resume" aria-label="Continue learning">
-    <div class="featured-copy">
-      <span class="pill pill-outline"><span class="live-dot"></span> PICK UP WHERE YOU LEFT OFF</span>
-      <p class="featured-course">{{ featured.course.display_name }}</p>
-      <h2>{{ featured.file.title }}</h2>
-      <p class="featured-description">Your next step is ready when you are. Continue from {{ fmt_dur(featured.current_time) }}.</p>
-      <div class="featured-actions">
-        <a class="button button-light" href="{{ url_for('play', file_hash=featured.file.file_hash) }}"><span class="button-play">▶</span> Continue learning</a>
-        <a class="button button-quiet" href="{{ url_for('course_detail', course_id=featured.course.id) }}">Course overview <span aria-hidden="true">↗</span></a>
-      </div>
-      {% if featured.file.duration %}
-        <div class="featured-progress-label"><span>LESSON PROGRESS</span><span>{{ (featured.current_time / featured.file.duration * 100)|round|int }}%</span></div>
-        <div class="featured-progress"><span style="width: {{ (featured.current_time / featured.file.duration * 100)|round|int }}%"></span></div>
+<div class="dashboard-layout">
+  <div class="dashboard-main-column">
+    <section class="dashboard-study-section">
+      <div class="section-heading"><h2>{{ 'Continue learning' if continue_learning else ('Make time for what matters' if stats.courses else 'Your learning starts here') }}</h2>{% if continue_learning %}<a class="text-link" href="{{ url_for('continue_watching') }}">All in progress {{ icon('arrow-right') }}</a>{% endif %}</div>
+      {% if continue_learning %}
+        {% set featured = continue_learning[0] %}
+        <article class="featured-resume">
+          <div class="featured-copy"><a class="featured-course" href="{{ url_for('course_detail', course_id=featured.course.id) }}">{{ featured.course.display_name }}</a><h3>{{ featured.file.title }}</h3><p class="featured-description">Pick up where you left off. Your next step is already waiting.</p><div class="resume-detail">{{ icon('clock') }}Resume at {{ fmt_dur(featured.current_time) }}<span>·</span>{{ featured.file.file_type|title }} lesson</div><div class="featured-actions"><a class="button button-primary" href="{{ url_for('play', file_hash=featured.file.file_hash) }}">{{ icon('play') }}Resume lesson</a><a class="text-link" href="{{ url_for('course_detail', course_id=featured.course.id) }}">View course {{ icon('arrow-right') }}</a></div>{% if featured.file.duration %}{% set lesson_percent = [(featured.current_time / featured.file.duration * 100)|round|int, 100]|min %}<div class="featured-progress-label"><span>Lesson progress</span><span>{{ lesson_percent }}%</span></div><progress class="featured-progress" value="{{ lesson_percent }}" max="100" aria-label="Current lesson progress"></progress>{% endif %}</div>
+          <div class="featured-art" aria-hidden="true">{% if featured.file.thumbnail or featured.course.thumbnail %}<img class="feature-course-image" src="{{ featured.file.thumbnail or featured.course.thumbnail }}" alt="">{% else %}<img class="study-illustration" src="{{ url_for('static', filename='img/study-books.webp') }}" alt="" width="640" height="640">{% endif %}</div>
+        </article>
+        {% if continue_learning|length > 1 %}<div class="continue-compact-list">{% for item in continue_learning[1:3] %}<a class="continue-compact" href="{{ url_for('play', file_hash=item.file.file_hash) }}"><span class="compact-play">{{ icon('play') }}</span><span class="compact-lesson-copy"><strong>{{ item.file.title }}</strong><small>{{ item.course.display_name }} · {{ fmt_dur(item.current_time) }}</small></span>{{ icon('arrow-up-right') }}</a>{% endfor %}</div>{% endif %}
+      {% else %}
+        <article class="welcome-panel"><div class="welcome-copy"><h2>Good things begin<br>with curiosity.</h2><p>{{ 'A new lesson. A fresh perspective. Find your next step in the courses you’ve collected.' if stats.courses else 'Bring your course folders into one thoughtful workspace. Learn, take notes, and find your own rhythm.' }}</p>{% if starter_file %}<a class="button button-primary" href="{{ url_for('play', file_hash=starter_file.file_hash) }}">{{ icon('play') }}Start learning</a>{% elif stats.courses %}<a class="button button-primary" href="{{ url_for('courses') }}">Explore your courses {{ icon('arrow-right') }}</a>{% else %}<button class="button button-primary" type="button" data-open-add>{{ icon('plus') }}Add your first course</button>{% endif %}<span class="welcome-reassurance">{{ icon('folder') }}Your files stay in the folders you choose.</span></div><div class="welcome-art" aria-hidden="true"><img class="study-illustration" src="{{ url_for('static', filename='img/study-books.webp') }}" width="640" height="640" alt=""></div></article>
       {% endif %}
-    </div>
-    <a class="featured-art" href="{{ url_for('play', file_hash=featured.file.file_hash) }}" tabindex="-1" aria-hidden="true">
-      {% if featured.file.thumbnail %}<img src="{{ featured.file.thumbnail }}" alt="">
-      {% elif featured.course.thumbnail %}<img src="{{ featured.course.thumbnail }}" alt="">
-      {% else %}<div class="featured-art-fallback"><span>{{ featured.course.display_name[:1]|upper }}</span></div>{% endif %}
-      <span class="featured-art-shade"></span>
-      <span class="featured-art-stamp">LEARN<br>AT YOUR<br>OWN PACE</span>
-      <span class="featured-play">▶</span>
-    </a>
-  </section>
-{% else %}
-  <section class="welcome-panel">
-    <div class="welcome-copy">
-      <span class="pill pill-outline">A QUIETER WAY TO LEARN</span>
-      <h2>Make your library<br>your next classroom<span class="heading-period">.</span></h2>
-      <p>Bring your courses, lessons, notes, and resources into one focused learning space. Everything stays on your device.</p>
-      <button class="button button-light" type="button" data-open-add><span class="button-play">＋</span> Add your first course</button>
-    </div>
-    <div class="welcome-graphic" aria-hidden="true">
-      <div class="graphic-card graphic-card-back"></div>
-      <div class="graphic-card graphic-card-front"><span class="graphic-line"></span><span class="graphic-line short"></span><span class="graphic-play">▶</span><span class="graphic-caption">YOUR NEXT CHAPTER</span></div>
-      <span class="graphic-orbit orbit-one"></span><span class="graphic-orbit orbit-two"></span>
-      <span class="graphic-star star-one">✳</span><span class="graphic-star star-two">✦</span>
-    </div>
-  </section>
-{% endif %}
+    </section>
 
-<section class="stats-row" aria-label="Library overview">
-  <div class="stat-item"><span class="stat-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 4.75A1.75 1.75 0 0 1 5.75 3H20v17H5.75A1.75 1.75 0 0 1 4 18.25v-13.5ZM4 17.5h16M8 7h8M8 10.5h8"/></svg></span><span class="stat-copy"><span class="stat-number">{{ stats.courses }}</span><span class="stat-label">Courses in library</span></span></div>
-  <div class="stat-item"><span class="stat-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M8 5v14l11-7L8 5Z"/></svg></span><span class="stat-copy"><span class="stat-number">{{ stats.lessons }}</span><span class="stat-label">Lessons & resources</span></span></div>
-  <div class="stat-item"><span class="stat-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="8.5"/><path d="M12 7v5l3 2"/></svg></span><span class="stat-copy"><span class="stat-number">{{ fmt_dur_h(stats.study_seconds) }}</span><span class="stat-label">Time spent learning</span></span></div>
-  <div class="stat-item"><span class="stat-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m5 12.5 4.2 4.2L19 7"/></svg></span><span class="stat-copy"><span class="stat-number">{{ stats.watched }}</span><span class="stat-label">Lessons completed</span></span></div>
-</section>
-
-{% if continue_learning|length > 1 %}
-  <section class="content-section">
-    <div class="section-heading"><div><p class="overline">KEEP THE MOMENTUM</p><h2>Continue learning</h2></div><a class="text-link" href="{{ url_for('continue_watching') }}">View all <span aria-hidden="true">→</span></a></div>
-    <div class="continue-grid">
-      {% for item in continue_learning[1:] %}{% include "_lesson_card.html" %}{% endfor %}
-    </div>
-  </section>
-{% endif %}
-
-<section class="content-section">
-  <div class="section-heading"><div><p class="overline">BUILT AROUND YOUR INTERESTS</p><h2>Your courses</h2></div><a class="text-link" href="{{ url_for('courses') }}">Browse library <span aria-hidden="true">→</span></a></div>
-  {% if recent_courses %}
-    <div class="course-grid course-grid-featured">
-      {% for course in recent_courses[:4] %}{% include "_course_card.html" %}{% endfor %}
-    </div>
-  {% else %}
-    <div class="empty-state compact-empty">
-      <div class="empty-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 4.75A1.75 1.75 0 0 1 5.75 3H20v17H5.75A1.75 1.75 0 0 1 4 18.25v-13.5ZM4 17.5h16M8 7h8M8 10.5h5"/></svg></div>
-      <div><h3>Your first course starts here.</h3><p>Add a folder from your computer to build a private course library.</p></div>
-      <button class="button button-secondary" type="button" data-open-add>Add course</button>
-    </div>
-  {% endif %}
-</section>
-
-{% if recent_courses|length > 4 %}
-<section class="content-section">
-  <div class="section-heading"><div><p class="overline">MORE TO EXPLORE</p><h2>Recently added</h2></div></div>
-  <div class="course-grid">
-    {% for course in recent_courses[4:] %}{% include "_course_card.html" %}{% endfor %}
+    <section class="content-section dashboard-courses"><div class="section-heading"><h2>Your course library <span class="section-count">{{ stats.courses }}</span></h2><a class="text-link" href="{{ url_for('courses') }}">View all courses {{ icon('arrow-right') }}</a></div>
+    {% if recent_courses %}<div class="course-grid course-grid-featured">{% for course in recent_courses[:6] %}{% include "_course_card.html" %}{% endfor %}</div>
+    {% else %}<div class="getting-started"><div><h3>From folder to classroom.</h3><p>A course can be a video series, a reading list, or a mix of both.</p></div><ol class="setup-steps"><li><span>1</span><div><strong>Choose your course folder</strong><p>Use a folder on this computer or a connected drive.</p></div></li><li><span>2</span><div><strong>Let your library take shape</strong><p>Lessons and resources keep their original folder structure.</p></div></li><li><span>3</span><div><strong>Settle into a lesson</strong><p>Your progress, notes, and bookmarks stay together.</p></div></li></ol></div>{% endif %}</section>
   </div>
-</section>
-{% endif %}
 
-<div class="modal-backdrop" id="add-course-modal" hidden>
-  <section class="modal-card" role="dialog" aria-modal="true" aria-labelledby="add-course-title">
-    <div class="modal-heading"><div><p class="overline">GROW YOUR LIBRARY</p><h2 id="add-course-title">Add a course</h2><p>Choose a folder on the computer running LocalAcademy.</p></div><button class="icon-button" type="button" data-close-modal aria-label="Close">×</button></div>
-    <form id="add-course-form" class="form-stack">
-      <label>Course name<input name="display_name" required maxlength="255" placeholder="e.g. Introduction to design"></label>
-      <label>Folder path<input name="root_path" required placeholder="/Users/you/Courses/design or D:\\Courses\\design"></label>
-      <p class="field-hint">LocalAcademy scans the folder and keeps its files in place. Nothing is uploaded.</p>
-      <label>Short description <span class="optional-label">Optional</span><textarea name="description" rows="3" placeholder="What will you learn?"></textarea></label>
-      <div class="form-two-column"><label>Instructor(s) <span class="optional-label">Optional</span><input name="creator_names" placeholder="Separate names with commas"></label><label>Categories <span class="optional-label">Optional</span><input name="category_names" placeholder="Design, Fundamentals"></label></div>
-      <label>Tags <span class="optional-label">Optional</span><input name="tag_names" placeholder="Beginner, Video, Reference"></label>
-      <div class="modal-actions"><button class="button button-secondary" type="button" data-close-modal>Cancel</button><button class="button button-primary" type="submit"><span>Add to library</span><span class="button-spinner" hidden></span></button></div>
-      <p class="form-error" id="add-course-error" role="alert" hidden></p>
-    </form>
-  </section>
+  <aside class="dashboard-rail" aria-label="Your learning overview">
+    <section class="snapshot-panel"><div class="rail-heading"><h2>Learning snapshot</h2>{{ icon('leaf') }}</div><div class="snapshot-completion"><strong>{{ stats.watched }} <span>/ {{ stats.lessons }}</span></strong><p>lessons completed</p><progress class="progress-track" value="{{ stats.watched }}" max="{{ stats.lessons or 1 }}" aria-label="Completed lessons across your library"></progress></div><dl class="snapshot-facts"><div><dt>{{ icon('clock') }}Playback progress</dt><dd>{{ fmt_dur_h(stats.study_seconds) }}</dd></div><div><dt>{{ icon('library') }}Courses in library</dt><dd>{{ stats.courses }}</dd></div><div><dt>{{ icon('folder') }}Connected folders</dt><dd>{{ stats.available }}</dd></div><div><dt>{{ icon('note') }}Notes collected</dt><dd>{{ stats.notes }}</dd></div></dl><p class="snapshot-note">{{ 'Every lesson is a step forward. Keep going at a pace that works for you.' if stats.watched else 'No finish line to rush toward. Your next lesson is a good place to start.' }}</p></section>
+    <section class="notebook-panel"><div class="rail-heading"><h2>From your notebook</h2>{{ icon('note') }}</div>{% if recent_notes %}<div class="recent-notes">{% for note in recent_notes %}<a class="recent-note" href="{{ url_for('play', file_hash=note.file.file_hash) }}#notes"><p>{{ note.content }}</p><span>{{ note.file.course.display_name }}</span><small>{{ note.updated_at.strftime('%d %b') if note.updated_at else '' }} {{ icon('arrow-up-right') }}</small></a>{% endfor %}</div>{% else %}<div class="notebook-empty">{{ icon('edit') }}<h3>Keep the good ideas.</h3><p>Take a note during a lesson. Your latest thoughts will find a home here.</p></div>{% endif %}</section>
+    <a class="appearance-callout" href="{{ url_for('settings_page') }}#appearance"><span class="appearance-icon">{{ icon('palette') }}</span><span><strong>A campus that feels like you.</strong><small>Five themes for your learning space.</small></span>{{ icon('arrow-right') }}</a>
+  </aside>
 </div>
+{% include '_add_course_modal.html' %}
 {% endblock %}

@@ -2,11 +2,8 @@
 {% block title %}{{ item.name }}{% endblock %}
 {% block breadcrumb %}<a href="{{ url_for('collections') }}">Collections</a><span class="context-separator">/</span><span>{{ item.name }}</span>{% endblock %}
 {% block content %}
-<section class="collection-hero">
-  <span class="collection-hero-mark">{% if kind == 'categories' %}01{% elif kind == 'creators' %}02{% else %}03{% endif %}</span>
-  <div><p class="overline">{{ kind|replace('creators', 'INSTRUCTOR')|replace('categories', 'CATEGORY')|replace('tags', 'TAG') }}</p><h1>{{ item.name }}<span class="heading-period">.</span></h1><p>{{ courses|length }} {{ 'course' if courses|length == 1 else 'courses' }} in this collection</p></div>
-  <a href="{{ url_for('collections') }}" class="button button-secondary">← All collections</a>
-</section>
+<a class="back-link" href="{{ url_for('collections') }}">{{ icon('arrow-left') }}All collections</a>
+<section class="collection-hero"><span class="collection-hero-mark">{{ icon('book' if kind == 'categories' else ('tag' if kind == 'tags' else 'library')) }}</span><div><h1>{{ item.name }}</h1><p>{{ courses|length }} {{ 'course' if courses|length == 1 else 'courses' }} · {{ 'Category' if kind == 'categories' else ('Instructor' if kind == 'creators' else 'Tag') }}</p></div><a href="{{ url_for('courses') }}" class="button button-secondary">Browse library {{ icon('arrow-right') }}</a></section>
 {% if courses %}<div class="course-grid">{% for course in courses %}{% include "_course_card.html" %}{% endfor %}</div>
-{% else %}<div class="empty-state"><div class="empty-icon">＋</div><h2>This collection is ready for a course</h2><p>Add “{{ item.name }}” to a course when you edit its details.</p><a class="button button-secondary" href="{{ url_for('courses') }}">Browse courses</a></div>{% endif %}
+{% else %}<div class="empty-state"><div class="empty-icon">{{ icon('folder') }}</div><h2>This collection is ready for a course.</h2><p>Add “{{ item.name }}” to a course when you edit its details.</p><a class="button button-primary" href="{{ url_for('courses') }}">Browse your courses {{ icon('arrow-right') }}</a></div>{% endif %}
 {% endblock %}

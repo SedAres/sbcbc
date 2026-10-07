@@ -1,0 +1,10 @@
+{% from '_icons.html' import icon %}
+{% macro theme_choice(theme, preview=false) %}
+<button type="button" class="{{ 'theme-choice' if preview else 'theme-option' }}" data-theme-choice="{{ theme.id }}" aria-pressed="false">
+  {% if preview %}
+  <span class="theme-preview" data-preview-theme="{{ theme.id }}" aria-hidden="true"><span class="preview-sidebar"><i></i><i></i><i></i></span><span class="preview-content"><span class="preview-heading"></span><span class="preview-feature"></span><span class="preview-courses"><i></i><i></i><i></i></span></span></span>
+  {% else %}<span class="theme-swatch swatch-{{ theme.id }}" aria-hidden="true"></span>{% endif %}
+  <span class="theme-option-copy"><strong>{{ theme.name }}</strong><small>{{ theme.description }}</small></span>
+  {{ icon('check', 'theme-selected-check') }}
+</button>
+{% endmacro %}

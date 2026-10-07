@@ -52,6 +52,12 @@
     const error = $("#settings-error");
     const status = $("#settings-save-status");
     const submit = $('button[type="submit"]', form);
+    let dirty = false;
+    const markDirty = () => {
+      dirty = true;
+      form.classList.add("is-dirty");
+      if (status) status.textContent = "You have unsaved changes.";
+    };
     form.addEventListener("submit", async event => {
       event.preventDefault();
       submit.disabled = true;
@@ -65,6 +71,8 @@
         });
         const result = await response.json();
         if (!response.ok) throw new Error(result.error || "Could not save preferences.");
+        dirty = false;
+        form.classList.remove("is-dirty");
         if (status) status.textContent = "Preferences saved just now.";
         window.LocalAcademy?.toast("Your preferences have been saved.");
         $$('[data-range-output]', form).forEach(output => {
@@ -89,12 +97,18 @@
           label.textContent = toggle.name === "rtl_enabled" ? (toggle.checked ? "RTL" : "LTR") : (toggle.checked ? "On" : "Off");
         }
       }
-      if (status) status.textContent = "You have unsaved changes.";
+      markDirty();
+    });
+    form.addEventListener("input", markDirty);
+    window.addEventListener("beforeunload", event => {
+      if (!dirty) return;
+      event.preventDefault();
+      event.returnValue = "";
     });
 
     $("#reset-settings")?.addEventListener("click", async event => {
       const button = event.currentTarget;
-      if (!window.confirm("Reset playback preferences? Courses, notes, bookmarks, and progress will stay untouched.")) return;
+      if (!await window.LocalAcademy.confirm({ title: "Reset player preferences?", message: "Playback, caption, and keyboard preferences will return to their defaults. Your courses, notes, bookmarks, progress, and chosen theme stay unchanged.", confirmLabel: "Reset preferences" })) return;
       button.disabled = true;
       try {
         const response = await fetch("/settings/reset", { method: "POST", headers: { "Accept": "application/json" } });
@@ -133,7 +147,7 @@
       }
     });
     $("#reset-course-settings")?.addEventListener("click", async event => {
-      if (!window.confirm("Remove all overrides and use your global defaults for this course?")) return;
+      if (!await window.LocalAcademy.confirm({ title: "Use your global defaults?", message: "Remove this course’s player overrides. Your courses and learning progress stay unchanged.", confirmLabel: "Reset overrides" })) return;
       const button = event.currentTarget;
       button.disabled = true;
       try {

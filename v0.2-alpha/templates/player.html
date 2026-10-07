@@ -1,10 +1,11 @@
 {% extends "base.html" %}
+{% set is_media_lesson = file.file_type in ["video", "audio"] %}
 {% block title %}{{ file.title }}{% endblock %}
 {% block breadcrumb %}<a href="{{ url_for('courses') }}">Course library</a><span class="context-separator">/</span><a href="{{ url_for('course_detail', course_id=course.id) }}">{{ course.display_name }}</a><span class="context-separator">/</span><span>{{ file.title }}</span>{% endblock %}
 {% block content %}
 <section class="player-page" id="player-page" data-file-hash="{{ file.file_hash }}" data-file-type="{{ file.file_type }}" data-course-id="{{ course.id }}">
   <div class="player-titlebar">
-    <div class="player-title-copy"><p class="overline">{{ course.display_name }}</p><h1>{{ file.title }}</h1><span>{{ file.file_type|title }}{% if file.duration %} <i>·</i> {{ fmt_dur(file.duration) }}{% endif %}{% if file.video_quality %} <i>·</i> {{ file.video_quality }}{% endif %}</span></div>
+    <div class="player-title-copy"><h1>{{ file.title }}</h1><span>{{ file.file_type|title }}{% if file.duration %} <i>·</i> {{ fmt_dur(file.duration) }}{% endif %}{% if file.video_quality %} <i>·</i> {{ file.video_quality }}{% endif %}</span></div>
     <div class="player-title-actions">
       <button class="button button-secondary button-small" type="button" data-action="bookmark"><svg viewBox="0 0 24 24"><path d="M6 4.5A1.5 1.5 0 0 1 7.5 3h9A1.5 1.5 0 0 1 18 4.5V21l-6-4-6 4V4.5Z"/></svg>Bookmark</button>
       <button class="button button-secondary button-small" type="button" data-action="note"><svg viewBox="0 0 24 24"><path d="M5 4.5h14v15H5zM8 8h8M8 11.5h8M8 15h5"/></svg>Take a note</button>
@@ -20,12 +21,12 @@
             <source src="{{ url_for('serve_file', file_hash=file.file_hash) }}">
             {% for track in subtitle_tracks %}<track kind="subtitles" src="{{ track.url }}" srclang="{{ track.language }}" label="{{ track.label }}" {{ 'default' if settings.subtitle_enabled and loop.first else '' }}>{% endfor %}
           </video>
-          <div class="media-center-play" data-action="toggle-play" role="button" tabindex="0" aria-label="Play lesson"><span>▶</span></div>
+          <button class="media-center-play" type="button" data-action="toggle-play" aria-label="Play lesson">{{ icon('play') }}</button>
         {% elif file.file_type == 'audio' %}
           <div class="audio-artwork">
             {% if file.thumbnail or course.thumbnail %}<img src="{{ file.thumbnail or course.thumbnail }}" alt="">
             {% else %}<div class="audio-art-letter">{{ course.display_name[:1]|upper }}</div>{% endif %}
-            <div class="audio-art-shade"></div><div class="audio-art-copy"><span>NOW PLAYING</span><strong>{{ file.title }}</strong><small>{{ course.display_name }}</small></div>
+            <div class="audio-art-shade"></div><div class="audio-art-copy"><span>Audio lesson</span><strong>{{ file.title }}</strong><small>{{ course.display_name }}</small></div>
             <div class="audio-waveform" aria-hidden="true">{% for height in [32,50,38,76,45,63,26,82,48,34,68,42,91,54,30,72,47,86,38,58,29,78,48,67,34,93,46,61,28,73,43,84,55,36,70,49,90,31,64,39,78,46,59,29,82,48,68,34,92] %}<i style="--bar:{{ height }}%"></i>{% endfor %}</div>
           </div>
           <audio class="audio-element" id="lesson-media" data-media preload="metadata">
@@ -37,16 +38,16 @@
         {% elif file.file_type == 'html' %}
           <iframe class="interactive-frame" title="Interactive lesson: {{ file.title }}" sandbox="allow-scripts allow-forms" src="{{ url_for('serve_html_lesson', file_hash=file.file_hash) }}"></iframe>
         {% elif file.file_type == 'image' %}
-          <div class="image-viewer"><button class="image-zoom-button" type="button" data-action="zoom-image" aria-label="Zoom image">＋</button><img id="lesson-image" src="{{ url_for('serve_file', file_hash=file.file_hash) }}" alt="{{ file.title }}"></div>
+          <div class="image-viewer"><button class="image-zoom-button" type="button" data-action="zoom-image" aria-label="Zoom image">{{ icon('plus') }}</button><img id="lesson-image" src="{{ url_for('serve_file', file_hash=file.file_hash) }}" alt="{{ file.title }}"></div>
         {% elif file.file_type == 'epub' %}
           <div class="epub-reader" dir="{{ 'rtl' if settings.rtl_enabled else 'ltr' }}" data-epub-reader data-url="{{ url_for('epub_chapters', file_hash=file.file_hash) }}">
-            <div class="epub-toolbar"><button type="button" class="icon-button" data-epub-prev aria-label="Previous chapter">←</button><select data-epub-toc aria-label="Choose chapter"><option>Loading book…</option></select><button type="button" class="icon-button" data-epub-next aria-label="Next chapter">→</button><button type="button" class="icon-button" data-epub-font aria-label="Change text size">A+</button></div>
+            <div class="epub-toolbar"><button type="button" class="icon-button" data-epub-prev aria-label="Previous chapter">{{ icon('arrow-left') }}</button><select data-epub-toc aria-label="Choose chapter"><option>Loading book…</option></select><button type="button" class="icon-button" data-epub-next aria-label="Next chapter">{{ icon('arrow-right') }}</button><button type="button" class="icon-button" data-epub-font aria-label="Change text size">A+</button></div>
             <article class="epub-content" data-epub-content aria-live="polite"><p class="reader-loading">Opening your book…</p></article>
           </div>
         {% elif file.file_type == 'text' %}
-          <div class="text-reader" dir="{{ 'rtl' if settings.rtl_enabled else 'ltr' }}" data-text-reader data-url="{{ url_for('serve_text', file_hash=file.file_hash) }}"><div class="text-reader-header"><span>READING VIEW</span><button type="button" class="text-button" data-action="mark-complete">Mark complete</button></div><pre data-text-content>Opening document…</pre></div>
+          <div class="text-reader" dir="{{ 'rtl' if settings.rtl_enabled else 'ltr' }}" data-text-reader data-url="{{ url_for('serve_text', file_hash=file.file_hash) }}"><div class="text-reader-header"><span>Reading view</span><button type="button" class="text-button" data-action="mark-complete"><span data-complete-label>{{ 'Completed' if progress.completed else 'Mark complete' }}</span></button></div><pre data-text-content>Opening document…</pre></div>
         {% else %}
-          <div class="download-reader"><span class="download-file-icon">{{ file.file_extension[1:]|upper if file.file_extension else 'FILE' }}</span><p class="overline">COURSE RESOURCE</p><h2>{{ file.title }}</h2><p>{{ fmt_size(file.file_size) }}{% if file.file_extension %} · {{ file.file_extension[1:]|upper }}{% endif %}</p><a class="button button-light" href="{{ url_for('download_file', file_hash=file.file_hash) }}"><svg viewBox="0 0 24 24"><path d="M12 3v12m-5-5 5 5 5-5M5 19h14"/></svg>Download resource</a><button class="text-button mark-resource" type="button" data-action="mark-complete">Mark this resource complete</button></div>
+          <div class="download-reader"><span class="download-file-icon">{{ file.file_extension[1:]|upper if file.file_extension else 'FILE' }}</span><h2>{{ file.title }}</h2><p>{{ fmt_size(file.file_size) }}{% if file.file_extension %} · {{ file.file_extension[1:]|upper }}{% endif %}</p><a class="button button-light" href="{{ url_for('download_file', file_hash=file.file_hash) }}"><svg viewBox="0 0 24 24"><path d="M12 3v12m-5-5 5 5 5-5M5 19h14"/></svg>Download resource</a><button class="text-button mark-resource" type="button" data-action="mark-complete"><span data-complete-label>{{ 'Completed' if progress.completed else 'Mark complete' }}</span></button></div>
         {% endif %}
 
         {% if file.file_type in ['video', 'audio'] %}
@@ -54,7 +55,7 @@
           <div class="media-timeline" data-seekbar role="slider" aria-label="Seek lesson" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0" tabindex="0"><span class="timeline-buffer"></span><span class="timeline-progress" data-progress-fill></span><span class="timeline-thumb"></span></div>
           <div class="controls-row">
             <div class="controls-left">
-              <button class="control-button control-play" type="button" data-action="toggle-play" aria-label="Play"><span data-play-icon>▶</span></button>
+              <button class="control-button control-play" type="button" data-action="toggle-play" aria-label="Play"><span data-play-icon>{{ icon('play') }}</span></button>
               <button class="control-button" type="button" data-action="seek-back" aria-label="Back 5 seconds"><svg viewBox="0 0 24 24"><path d="M7 7H3V3M3.5 7A9 9 0 1 1 3 14"/><path d="M12 8v4l2.5 1.5"/></svg><small>5</small></button>
               <button class="control-button" type="button" data-action="seek-forward" aria-label="Forward 5 seconds"><svg viewBox="0 0 24 24"><path d="M17 7h4V3m-.5 4A9 9 0 1 0 21 14"/><path d="M12 8v4l2.5 1.5"/></svg><small>5</small></button>
               <button class="control-button volume-button" type="button" data-action="mute" aria-label="Mute"><svg viewBox="0 0 24 24"><path d="M4 10v4h4l5 4V6l-5 4H4Zm12-1a4 4 0 0 1 0 6m2-9a7 7 0 0 1 0 12"/></svg></button>
@@ -64,7 +65,7 @@
             <div class="controls-right">
               <label class="speed-control"><span>Speed</span><select data-speed aria-label="Playback speed">{% for speed in [0.5, 0.75, 1, 1.25, 1.5, 1.75, 2, 2.5, 3, 4] %}<option value="{{ speed }}" {{ 'selected' if settings.playback_speed == speed else '' }}>{{ speed }}×</option>{% endfor %}</select></label>
               <button class="control-button silence-button {{ 'is-on' if settings.skip_silence_enabled else '' }}" type="button" data-action="silence" aria-pressed="{{ 'true' if settings.skip_silence_enabled else 'false' }}" title="Skip quiet sections"><svg viewBox="0 0 24 24"><path d="M3 12h4l3-6 4 12 3-6h4"/></svg><span>Silence</span></button>
-              <button class="control-button captions-button {{ 'has-tracks' if subtitle_tracks }}" type="button" data-action="captions" aria-pressed="{{ 'true' if settings.subtitle_enabled and subtitle_tracks else 'false' }}" title="Toggle captions"><span class="cc-icon">CC</span></button>
+              <button class="control-button captions-button {{ 'has-tracks' if subtitle_tracks }}" type="button" data-action="captions" aria-label="Toggle captions" aria-pressed="{{ 'true' if settings.subtitle_enabled and subtitle_tracks else 'false' }}" title="Toggle captions"><span class="cc-icon">CC</span></button>
               <button class="control-button" type="button" data-action="theater" aria-label="Theater mode" title="Theater mode"><svg viewBox="0 0 24 24"><path d="M3 7h18v10H3zM7 4v3m10-3v3M7 17v3m10-3v3"/></svg></button>
               <button class="control-button" type="button" data-action="fullscreen" aria-label="Fullscreen" title="Fullscreen"><svg viewBox="0 0 24 24"><path d="M8 4H4v4m12-4h4v4M4 16v4h4m12-4v4h-4"/></svg></button>
             </div>
@@ -78,35 +79,35 @@
         <div class="player-lesson-meta"><span class="pill pill-subtle">{{ file.file_type|upper }}</span><span>{{ fmt_size(file.file_size) }}</span>{% if file.file_extension %}<span>·</span><span>{{ file.file_extension[1:]|upper }}</span>{% endif %}</div>
         <div class="player-actions-row">
           <button class="button button-secondary button-small" type="button" data-action="note"><svg viewBox="0 0 24 24"><path d="M5 4.5h14v15H5zM8 8h8M8 11.5h8M8 15h5"/></svg>Add a note</button>
-          <button class="button button-secondary button-small" type="button" data-action="bookmark"><svg viewBox="0 0 24 24"><path d="M6 4.5A1.5 1.5 0 0 1 7.5 3h9A1.5 1.5 0 0 1 18 4.5V21l-6-4-6 4V4.5Z"/></svg>Save moment</button>
+          <button class="button button-secondary button-small" type="button" data-action="bookmark"><svg viewBox="0 0 24 24"><path d="M6 4.5A1.5 1.5 0 0 1 7.5 3h9A1.5 1.5 0 0 1 18 4.5V21l-6-4-6 4V4.5Z"/></svg>{{ 'Save moment' if is_media_lesson else 'Save bookmark' }}</button>
           <button class="button button-secondary button-small" type="button" data-action="mark-complete"><svg viewBox="0 0 24 24"><path d="m5 12 4.5 4.5L19 7"/></svg><span data-complete-label>{{ 'Completed' if progress.completed else 'Mark complete' }}</span></button>
           <span class="player-save-state" data-save-state>Progress saves automatically</span>
         </div>
       </div>
       <div class="player-lower-grid">
-        <section class="lesson-about"><p class="overline">IN THIS COURSE</p><h2>{{ course.display_name }}</h2><p>{{ course.description or 'Keep working through this course one lesson at a time.' }}</p><a href="{{ url_for('course_detail', course_id=course.id) }}" class="text-link">Course overview <span>→</span></a></section>
-        <section class="lesson-navigation"><p class="overline">LESSON NAVIGATION</p><div class="lesson-nav-buttons">{% if current_index > 0 %}<a href="{{ url_for('play', file_hash=lesson_files[current_index - 1].file_hash) }}" class="lesson-nav-link">← Previous</a>{% else %}<span class="lesson-nav-link is-disabled">← Previous</span>{% endif %}{% if current_index + 1 < lesson_files|length %}<a href="{{ url_for('play', file_hash=lesson_files[current_index + 1].file_hash) }}" class="lesson-nav-link">Next lesson →</a>{% else %}<span class="lesson-nav-link is-disabled">Next lesson →</span>{% endif %}</div><span class="lesson-position">Lesson {{ current_index + 1 }} of {{ lesson_files|length }}</span></section>
+        <section class="lesson-about"><h2>{{ course.display_name }}</h2><p>{{ course.description or 'Keep working through this course one lesson at a time.' }}</p><a href="{{ url_for('course_detail', course_id=course.id) }}" class="text-link">Course overview {{ icon('arrow-right') }}</a></section>
+        <section class="lesson-navigation"><h3>Keep learning</h3><div class="lesson-nav-buttons">{% if current_index > 0 %}<a href="{{ url_for('play', file_hash=lesson_files[current_index - 1].file_hash) }}" class="lesson-nav-link">{{ icon('arrow-left') }}Previous</a>{% else %}<span class="lesson-nav-link is-disabled">{{ icon('arrow-left') }}Previous</span>{% endif %}{% if current_index + 1 < lesson_files|length %}<a href="{{ url_for('play', file_hash=lesson_files[current_index + 1].file_hash) }}" class="lesson-nav-link">Next lesson {{ icon('arrow-right') }}</a>{% else %}<span class="lesson-nav-link is-disabled">Next lesson {{ icon('arrow-right') }}</span>{% endif %}</div><span class="lesson-position">Lesson {{ current_index + 1 }} of {{ lesson_files|length }}</span></section>
       </div>
     </div>
 
     <aside class="learning-panel" id="learning-panel">
-      <div class="panel-heading"><div><p class="overline">YOUR STUDY SPACE</p><h2>{{ course.display_name }}</h2></div><a class="icon-button panel-course-link" href="{{ url_for('course_detail', course_id=course.id) }}" title="Course overview" aria-label="Course overview">↗</a></div>
+      <div class="panel-heading"><div><h2>{{ course.display_name }}</h2></div><a class="icon-button panel-course-link" href="{{ url_for('course_detail', course_id=course.id) }}" title="Course overview" aria-label="Course overview">{{ icon('arrow-up-right') }}</a></div>
       <div class="panel-tabs" role="tablist" aria-label="Learning tools">
-        <button class="panel-tab {{ 'is-active' if subtitle_tracks else '' }}" type="button" role="tab" aria-selected="{{ 'true' if subtitle_tracks else 'false' }}" data-panel-tab="transcript">Transcript</button>
-        <button class="panel-tab {{ 'is-active' if not subtitle_tracks else '' }}" type="button" role="tab" aria-selected="{{ 'false' if subtitle_tracks else 'true' }}" data-panel-tab="lessons">Lessons</button>
-        <button class="panel-tab" type="button" role="tab" aria-selected="false" data-panel-tab="notes">Notes</button>
-        <button class="panel-tab" type="button" role="tab" aria-selected="false" data-panel-tab="bookmarks">Saved</button>
+        <button class="panel-tab {{ 'is-active' if subtitle_tracks else '' }}" type="button" role="tab" aria-selected="{{ 'true' if subtitle_tracks else 'false' }}" id="tab-transcript" aria-controls="panel-transcript" data-panel-tab="transcript" {{ 'hidden' if not is_media_lesson else '' }}>Transcript</button>
+        <button class="panel-tab {{ 'is-active' if not subtitle_tracks else '' }}" type="button" role="tab" aria-selected="{{ 'false' if subtitle_tracks else 'true' }}" id="tab-lessons" aria-controls="panel-lessons" data-panel-tab="lessons">Lessons</button>
+        <button class="panel-tab" type="button" role="tab" aria-selected="false" id="tab-notes" aria-controls="panel-notes" data-panel-tab="notes">Notes</button>
+        <button class="panel-tab" type="button" role="tab" aria-selected="false" id="tab-bookmarks" aria-controls="panel-bookmarks" data-panel-tab="bookmarks">Saved</button>
       </div>
-      <section class="panel-view transcript-view {{ 'is-active' if subtitle_tracks else '' }}" data-panel-view="transcript" role="tabpanel">
+      <section class="panel-view transcript-view {{ 'is-active' if subtitle_tracks else '' }}" id="panel-transcript" aria-labelledby="tab-transcript" data-panel-view="transcript" role="tabpanel" tabindex="0" {{ 'hidden' if not subtitle_tracks or not is_media_lesson else '' }}>
         <div class="transcript-controls">
           <label class="track-select-wrap" data-track-select-wrap {{ 'hidden' if not subtitle_tracks else '' }}><span>CAPTIONS</span><select data-track-select aria-label="Caption language">{% for track in subtitle_tracks %}<option value="{{ track.key }}">{{ track.label }}{{ ' · attached' if track.source == 'attached' else '' }}</option>{% endfor %}</select></label>
           <label class="transcript-search"><svg viewBox="0 0 24 24"><circle cx="10.8" cy="10.8" r="6.8"/><path d="m16 16 4.2 4.2"/></svg><input type="search" data-transcript-search placeholder="Find in transcript" aria-label="Find in transcript"></label>
         </div>
         <div class="transcript-empty" data-transcript-empty {{ 'hidden' if subtitle_tracks else '' }}><span class="transcript-empty-mark">CC</span><h3>No transcript yet</h3><p>Add a sidecar subtitle file or attach a caption track to this lesson.</p><button class="button button-secondary button-small" type="button" data-caption-upload-button>Upload captions</button></div>
         <div class="transcript-list" data-transcript-list dir="{{ 'rtl' if settings.rtl_enabled else 'ltr' }}" aria-live="polite">{% if subtitle_tracks %}<p class="reader-loading">Loading transcript…</p>{% endif %}</div>
-        <div class="transcript-footer" data-transcript-footer {{ 'hidden' if not subtitle_tracks else '' }}><span data-transcript-count>— captions</span><button type="button" class="text-button" data-caption-upload-button>＋ Add track</button><button type="button" class="text-button danger-text" data-delete-track hidden>Remove attached</button></div>
+        <div class="transcript-footer" data-transcript-footer {{ 'hidden' if not subtitle_tracks else '' }}><span data-transcript-count>— captions</span><button type="button" class="text-button" data-caption-upload-button>{{ icon('plus') }}Add track</button><button type="button" class="text-button danger-text" data-delete-track hidden>Remove attached</button></div>
       </section>
-      <section class="panel-view lesson-list-view {{ 'is-active' if not subtitle_tracks else '' }}" data-panel-view="lessons" role="tabpanel" hidden>
+      <section class="panel-view lesson-list-view {{ 'is-active' if not subtitle_tracks else '' }}" id="panel-lessons" aria-labelledby="tab-lessons" data-panel-view="lessons" role="tabpanel" tabindex="0" hidden>
         <div class="panel-summary"><span>{{ tree.file_count }} lessons</span><span>{{ fmt_dur_h(course.total_duration) if course.total_duration else 'Resources' }}</span></div>
         <div class="panel-lessons">
           {% set last_folder = namespace(value='') %}
@@ -114,25 +115,25 @@
             {% if lesson.parent_folder != last_folder.value %}<div class="playlist-folder">{{ lesson.parent_folder or 'Course introduction' }}</div>{% set last_folder.value = lesson.parent_folder %}{% endif %}
             {% set watched = lesson.id in watched_file_ids %}
             <a class="playlist-lesson {{ 'is-current' if lesson.id == file.id else '' }} {{ 'is-watched' if watched else '' }}" href="{{ url_for('play', file_hash=lesson.file_hash) }}">
-              <span class="playlist-play">{% if watched %}✓{% elif lesson.file_type == 'video' %}▶{% elif lesson.file_type == 'audio' %}♫{% elif lesson.file_type == 'pdf' %}PDF{% elif lesson.file_type == 'html' %}&lt;/&gt;{% else %}□{% endif %}</span><span class="playlist-copy"><strong>{{ lesson.title }}</strong><small>{{ lesson.file_type|title }}{% if lesson.duration %} · {{ fmt_dur(lesson.duration) }}{% endif %}</small></span><span class="playlist-current-mark">{% if lesson.id == file.id %}NOW{% endif %}</span>
+              <span class="playlist-play">{% if watched %}{{ icon('check') }}{% elif lesson.file_type == 'video' %}{{ icon('play') }}{% elif lesson.file_type == 'audio' %}{{ icon('audio') }}{% elif lesson.file_type == 'pdf' %}PDF{% elif lesson.file_type == 'html' %}&lt;/&gt;{% else %}{{ icon('file') }}{% endif %}</span><span class="playlist-copy"><strong>{{ lesson.title }}</strong><small>{{ lesson.file_type|title }}{% if lesson.duration %} · {{ fmt_dur(lesson.duration) }}{% endif %}</small></span><span class="playlist-current-mark">{% if lesson.id == file.id %}NOW{% endif %}</span>
             </a>
           {% endfor %}
         </div>
       </section>
-      <section class="panel-view notes-view" data-panel-view="notes" role="tabpanel" hidden>
-        <div class="notes-panel-toolbar"><span>Notes for this course</span><button class="button button-secondary button-small" type="button" data-action="note">＋ Note</button></div>
-        <div class="saved-items-list" data-notes-list></div><div class="panel-empty" data-notes-empty hidden><span>✎</span><strong>No notes yet</strong><p>Capture an idea and keep it tied to this lesson.</p></div>
+      <section class="panel-view notes-view" id="panel-notes" aria-labelledby="tab-notes" data-panel-view="notes" role="tabpanel" tabindex="0" hidden>
+        <div class="notes-panel-toolbar"><span>Notes for this course</span><button class="button button-secondary button-small" type="button" data-action="note">{{ icon('plus') }}Note</button></div>
+        <div class="saved-items-list" data-notes-list></div><div class="panel-empty" data-notes-empty hidden><span>{{ icon('edit') }}</span><strong>No notes yet</strong><p>Capture an idea and keep it tied to this lesson.</p></div>
       </section>
-      <section class="panel-view bookmarks-view" data-panel-view="bookmarks" role="tabpanel" hidden>
-        <div class="notes-panel-toolbar"><span>Saved moments</span><button class="button button-secondary button-small" type="button" data-action="bookmark">＋ Save</button></div>
-        <div class="saved-items-list" data-bookmarks-list></div><div class="panel-empty" data-bookmarks-empty hidden><span>⌑</span><strong>No saved moments</strong><p>Bookmark a timestamp to return to it later.</p></div>
+      <section class="panel-view bookmarks-view" id="panel-bookmarks" aria-labelledby="tab-bookmarks" data-panel-view="bookmarks" role="tabpanel" tabindex="0" hidden>
+        <div class="notes-panel-toolbar"><span>Course bookmarks</span><button class="button button-secondary button-small" type="button" data-action="bookmark">{{ icon('plus') }}Save</button></div>
+        <div class="saved-items-list" data-bookmarks-list></div><div class="panel-empty" data-bookmarks-empty hidden><span>{{ icon('bookmark') }}</span><strong>No bookmarks yet</strong><p>{{ 'Bookmark a timestamp to return to it later.' if is_media_lesson else 'Save this lesson to find it again in your course bookmarks.' }}</p></div>
       </section>
     </aside>
   </div>
 
   <form class="hidden-upload" id="caption-upload-form"><input type="file" name="file" accept=".srt,.vtt,.ass,.ssa,.sub,text/vtt,application/x-subrip" data-caption-file><input type="hidden" name="language" value="und"></form>
-  <div class="note-composer" data-note-composer hidden><div class="note-composer-card"><div class="note-composer-heading"><div><p class="overline">SAVE AN IDEA</p><h2>New note</h2></div><button class="icon-button" type="button" data-action="close-note" aria-label="Close">×</button></div><form data-note-form><label class="note-time-toggle"><input type="checkbox" name="timestamped" checked><span>Attach current timestamp</span><strong data-note-time>0:00</strong></label><textarea name="content" rows="4" maxlength="5000" placeholder="Write down the idea you want to remember…" required></textarea><div class="modal-actions"><button class="button button-secondary" type="button" data-action="close-note">Cancel</button><button class="button button-primary" type="submit">Save note</button></div><p class="form-error" data-note-error hidden></p></form></div></div>
-  <div class="note-composer" data-bookmark-composer hidden><div class="note-composer-card bookmark-composer-card"><div class="note-composer-heading"><div><p class="overline">RETURN TO THIS MOMENT</p><h2>Save a bookmark</h2></div><button class="icon-button" type="button" data-action="close-bookmark" aria-label="Close">×</button></div><form data-bookmark-form><p class="bookmark-time-line">Saved at <strong data-bookmark-time>0:00</strong></p><label>Bookmark name<input name="label" maxlength="255" placeholder="e.g. Important concept"></label><div class="modal-actions"><button class="button button-secondary" type="button" data-action="close-bookmark">Cancel</button><button class="button button-primary" type="submit">Save moment</button></div></form></div></div>
+  <div class="note-composer" data-note-composer hidden><div class="note-composer-card" role="dialog" aria-modal="true" aria-labelledby="note-dialog-title" tabindex="-1"><div class="note-composer-heading"><div><h2 id="note-dialog-title">Keep a good idea</h2></div><button class="icon-button" type="button" data-action="close-note" aria-label="Close">{{ icon('close') }}</button></div><form data-note-form><label class="note-time-toggle" {{ 'hidden' if not is_media_lesson else '' }}><input type="checkbox" name="timestamped" {{ 'checked' if is_media_lesson else '' }}><span>Attach current timestamp</span><strong data-note-time>0:00</strong></label><label>Your note<textarea name="content" rows="4" maxlength="5000" placeholder="Write down the idea you want to remember…" required></textarea></label><div class="modal-actions"><button class="button button-secondary" type="button" data-action="close-note">Cancel</button><button class="button button-primary" type="submit">Save note</button></div><p class="form-error" data-note-error role="alert" hidden></p></form></div></div>
+  <div class="note-composer" data-bookmark-composer hidden><div class="note-composer-card bookmark-composer-card" role="dialog" aria-modal="true" aria-labelledby="bookmark-dialog-title" tabindex="-1"><div class="note-composer-heading"><div><h2 id="bookmark-dialog-title">{{ 'Save this moment' if is_media_lesson else 'Save this lesson' }}</h2></div><button class="icon-button" type="button" data-action="close-bookmark" aria-label="Close">{{ icon('close') }}</button></div><form data-bookmark-form><p class="bookmark-time-line" {{ 'hidden' if not is_media_lesson else '' }}>Saved at <strong data-bookmark-time>0:00</strong></p><label>Bookmark name<input name="label" maxlength="255" placeholder="e.g. Important concept"></label><div class="modal-actions"><button class="button button-secondary" type="button" data-action="close-bookmark">Cancel</button><button class="button button-primary" type="submit">{{ 'Save moment' if is_media_lesson else 'Save bookmark' }}</button></div></form></div></div>
 
   <script type="application/json" id="player-data">{{ player_data|tojson }}</script>
 </section>

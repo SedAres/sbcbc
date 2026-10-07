@@ -1,33 +1,16 @@
+{% from '_icons.html' import icon %}
 {% set card = course_cards.get(course.id, {}) %}
-<article class="course-card" data-course-card data-title="{{ course.display_name|lower }}" data-status="{{ 'unavailable' if not course.is_available else ('completed' if card.get('total', 0) and card.get('watched', 0) == card.get('total', 0) else ('progress' if card.get('in_progress') else 'new')) }}">
+<article class="course-card" data-course-card data-title="{{ (course.display_name ~ ' ' ~ (course.description or '') ~ ' ' ~ course.creators|map(attribute='name')|join(' ') ~ ' ' ~ course.categories|map(attribute='name')|join(' '))|lower }}">
   <a class="course-cover" href="{{ url_for('course_detail', course_id=course.id) }}" aria-label="Open {{ course.display_name }}">
-    {% if course.thumbnail %}
-      <img src="{{ course.thumbnail }}" alt="" loading="lazy">
-    {% else %}
-      <div class="cover-placeholder cover-tone-{{ (course.id % 4) + 1 }}">
-        <span class="cover-kicker">LOCAL ACADEMY · COURSE {{ '%02d'|format(course.id) }}</span>
-        <span class="cover-monogram">{{ course.display_name[:1]|upper }}</span>
-        <span class="cover-title">{{ course.display_name }}</span>
-        <span class="cover-lines" aria-hidden="true"></span>
-      </div>
-    {% endif %}
-    <span class="cover-status {{ 'is-offline' if not course.is_available else '' }}">{{ 'Offline' if not course.is_available else 'In library' }}</span>
+    {% if course.thumbnail %}<img src="{{ course.thumbnail }}" alt="" loading="lazy" width="600" height="360">
+    {% else %}<div class="cover-placeholder cover-tone-{{ (course.id % 4) + 1 }}" aria-hidden="true"><span class="cover-subject">{{ course.categories[0].name if course.categories else 'Personal course' }}</span><span class="cover-title">{{ course.display_name }}</span><span class="cover-footer">{{ icon('book') }}<span>{{ card.get('total', course.total_files or 0) }} lessons & resources</span></span><span class="cover-spine"></span></div>{% endif %}
+    {% if not course.is_available %}<span class="cover-status is-offline">Offline folder</span>{% elif card.get('percent') == 100 %}<span class="cover-status is-complete">{{ icon('check') }}Completed</span>{% endif %}
   </a>
   <div class="course-card-body">
-    <div class="course-card-topline">
-      {% if course.categories %}<span class="eyebrow">{{ course.categories[0].name }}</span>{% else %}<span class="eyebrow">COURSE</span>{% endif %}
-      <span class="course-card-menu">{{ '%02d'|format(course.id) }}</span>
-    </div>
     <a class="course-card-title" href="{{ url_for('course_detail', course_id=course.id) }}">{{ course.display_name }}</a>
-    <div class="course-card-meta">
-      {% if course.creators %}<span>{{ course.creators|map(attribute='name')|join(', ') }}</span>{% else %}<span>Personal library</span>{% endif %}
-      <span class="meta-separator">·</span>
-      <span>{{ card.get('total', course.total_files or 0) }} lessons</span>
-      {% if course.total_duration %}<span class="meta-separator">·</span><span>{{ fmt_dur_h(course.total_duration) }}</span>{% endif %}
-    </div>
-    <div class="course-card-progress">
-      <div class="progress-track"><span style="width: {{ card.get('percent', 0) }}%"></span></div>
-      <span>{{ card.get('percent', 0) }}%</span>
-    </div>
+    <p class="course-card-instructor">{{ course.creators|map(attribute='name')|join(', ') if course.creators else 'Your personal library' }}</p>
+    <div class="course-card-meta"><span>{{ card.get('total', course.total_files or 0) }} lessons</span>{% if course.total_duration %}<span class="meta-separator">·</span><span>{{ fmt_dur_h(course.total_duration) }}</span>{% endif %}<span class="course-category">{{ course.categories[0].name if course.categories else 'Self-paced' }}</span></div>
+    <div class="course-card-progress"><progress class="progress-track" value="{{ card.get('percent', 0) }}" max="100" aria-label="{{ course.display_name }} completion"></progress><span>{{ card.get('percent', 0) }}%</span></div>
+    <div class="course-card-footer"><span>{{ 'Completed' if card.get('percent') == 100 else ('In progress' if card.get('in_progress') else 'Ready when you are') }}</span><a href="{{ url_for('course_detail', course_id=course.id) }}" aria-label="View {{ course.display_name }}">View course {{ icon('arrow-right') }}</a></div>
   </div>
 </article>

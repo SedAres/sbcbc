@@ -1,8 +1,8 @@
 {% extends "base.html" %}
 {% block title %}Continue learning{% endblock %}
-{% block breadcrumb %}<span class="context-muted">Your campus</span><span class="context-separator">/</span><span>Continue learning</span>{% endblock %}
+{% block breadcrumb %}<a href="{{ url_for('index') }}">My workspace</a><span class="context-separator">/</span><span>Continue learning</span>{% endblock %}
 {% block content %}
-<section class="page-heading"><div><p class="overline">YOUR LEARNING, RIGHT WHERE YOU LEFT IT</p><h1>Continue learning<span class="heading-period">.</span></h1><p class="page-subtitle">A focused list of the lessons you’re currently working through.</p></div></section>
+<section class="page-heading"><div><h1>Right where you left off.</h1><p class="page-subtitle">Pick up a lesson and keep your curiosity moving.</p></div><a class="button button-secondary" href="{{ url_for('courses') }}">Browse your library {{ icon('arrow-right') }}</a></section>
 {% if items %}<div class="continue-page-grid">{% for item in items %}{% include "_lesson_card.html" %}{% endfor %}</div>
-{% else %}<div class="empty-state"><div class="empty-icon"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="8.5"/><path d="M12 7v5l3 2"/></svg></div><h2>Nothing in progress</h2><p>When you start a lesson, it will be waiting here for you.</p><a class="button button-secondary" href="{{ url_for('courses') }}">Explore your library</a></div>{% endif %}
+{% else %}<div class="empty-state"><div class="empty-icon">{{ icon('continue') }}</div><h2>Your next lesson is waiting.</h2><p>Start a course from your library. Lessons you leave in progress will be saved here.</p><a class="button button-primary" href="{{ url_for('courses') }}">Explore your courses {{ icon('arrow-right') }}</a></div>{% endif %}
 {% endblock %}

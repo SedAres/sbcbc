@@ -33,6 +33,15 @@ from models import (
 )
 
 
+UI_THEMES = (
+    {"id": "campus", "name": "Campus", "description": "Sage & forest · Light"},
+    {"id": "ocean", "name": "Ocean", "description": "Coastal blue · Light"},
+    {"id": "parchment", "name": "Parchment", "description": "Warm paper · Light"},
+    {"id": "mulberry", "name": "Mulberry", "description": "Soft plum · Light"},
+    {"id": "midnight", "name": "Midnight", "description": "Deep slate · Dark"},
+)
+
+
 _HOTKEY_ACTIONS = {
     "play_pause", "rewind_5s", "forward_5s", "prev_file", "next_file",
     "volume_up", "volume_down", "speed_up", "speed_down", "toggle_subtitles",
@@ -284,11 +293,22 @@ def create_app(test_config: dict[str, Any] | None = None) -> Flask:
             "fmt_dur_h": format_duration_human,
             "fmt_size": format_file_size,
             "site_name": "LocalAcademy",
+            "ui_themes": UI_THEMES,
+            "library_count": Course.query.count(),
+            "nav_categories": Category.query.order_by(Category.name).limit(4).all(),
+            "demo_mode": app.config.get("DEMO_MODE", False),
+            "today_label": datetime.now(timezone.utc).strftime("%A, %d %B"),
         }
 
     with app.app_context():
         db.create_all()
         _initialize_defaults()
+
+    @app.errorhandler(404)
+    def page_not_found(error):
+        if request.path.startswith("/api/") or request.accept_mimetypes.best == "application/json":
+            return jsonify(error="This page or resource is not available."), 404
+        return render_template("not_found.html", message=getattr(error, "description", None)), 404
 
     # ── Dashboard and search ───────────────────────────────────────────────
     @app.get("/")
@@ -301,11 +321,22 @@ def create_app(test_config: dict[str, Any] | None = None) -> Flask:
             "lessons": CourseFile.query.filter(CourseFile.file_type != "subtitle").count(),
             "watched": PlaybackProgress.query.filter_by(completed=True).count(),
             "study_seconds": int(db.session.query(func.sum(PlaybackProgress.current_time)).scalar() or 0),
+            "notes": Note.query.count(),
         }
         cards = {course.id: _course_progress(course) for course in courses}
+        recent_notes = (
+            Note.query.join(CourseFile).join(Course)
+            .filter(Course.is_available.is_(True))
+            .order_by(Note.updated_at.desc()).limit(3).all()
+        )
+        starter_file = next((
+            file for course in courses if course.is_available
+            for file in _file_records_in_order(course.id)
+            if file.file_type != "subtitle"
+        ), None)
         return render_template(
             "dashboard.html", continue_learning=continue_learning, recent_courses=courses,
-            course_cards=cards, stats=stats,
+            course_cards=cards, stats=stats, recent_notes=recent_notes, starter_file=starter_file,
         )
 
     @app.get("/continue-watching")
@@ -331,7 +362,12 @@ def create_app(test_config: dict[str, Any] | None = None) -> Flask:
             return jsonify(courses=[], files=[])
         like = f"%{query}%"
         courses = Course.query.filter(
-            or_(Course.display_name.ilike(like), Course.description.ilike(like))
+            or_(
+                Course.display_name.ilike(like), Course.description.ilike(like),
+                Course.creators.any(Creator.name.ilike(like)),
+                Course.categories.any(Category.name.ilike(like)),
+                Course.tags.any(Tag.name.ilike(like)),
+            )
         ).order_by(Course.display_name).limit(8).all()
         files = CourseFile.query.join(Course).filter(
             Course.is_available.is_(True),
@@ -348,6 +384,11 @@ def create_app(test_config: dict[str, Any] | None = None) -> Flask:
     def courses():
         view = request.args.get("view", "grid")
         filter_type = request.args.get("filter", "all")
+        if filter_type not in {"all", "available", "unavailable", "progress"}:
+            filter_type = "all"
+        sort_by = request.args.get("sort", "name")
+        if sort_by not in {"name", "recent", "accessed"}:
+            sort_by = "name"
         query = Course.query
         if filter_type == "available":
             query = query.filter_by(is_available=True)
@@ -360,13 +401,23 @@ def create_app(test_config: dict[str, Any] | None = None) -> Flask:
         search_query = request.args.get("q", "").strip()[:120]
         if search_query:
             like = f"%{search_query}%"
-            query = query.filter(or_(Course.display_name.ilike(like), Course.description.ilike(like)))
-        courses_list = query.order_by(Course.display_name).all()
+            query = query.filter(or_(
+                Course.display_name.ilike(like), Course.description.ilike(like),
+                Course.creators.any(Creator.name.ilike(like)),
+                Course.categories.any(Category.name.ilike(like)),
+                Course.tags.any(Tag.name.ilike(like)),
+            ))
+        sort_columns = {
+            "name": (func.lower(Course.display_name), Course.id),
+            "recent": (Course.created_at.desc(), Course.id.desc()),
+            "accessed": (Course.last_accessed.desc().nullslast(), func.lower(Course.display_name)),
+        }
+        courses_list = query.order_by(*sort_columns[sort_by]).all()
         progress = {course.id: _course_progress(course) for course in courses_list}
         return render_template(
             "courses.html", courses=courses_list, course_cards=progress,
-            view_mode=view if view in {"grid", "list"} else "grid",
-            filter_type=filter_type, show_add_modal=request.args.get("add") == "1",
+            view_mode=view if view in {"grid", "list"} else "grid", filter_type=filter_type,
+            sort_by=sort_by, search_query=search_query, show_add_modal=request.args.get("add") == "1",
         )
 
     @app.post("/courses/add")

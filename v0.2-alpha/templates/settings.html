@@ -2,13 +2,20 @@
 {% block title %}Settings{% endblock %}
 {% block breadcrumb %}<span class="context-muted">Your campus</span><span class="context-separator">/</span><span>Settings</span>{% endblock %}
 {% block content %}
-<section class="page-heading settings-heading"><div><p class="overline">MAKE IT YOURS</p><h1>Preferences<span class="heading-period">.</span></h1><p class="page-subtitle">Tune your player once. Your course library and learning progress stay right where they are.</p></div></section>
+<section class="page-heading settings-heading"><div><h1>Make this space yours.</h1><p class="page-subtitle">Set the atmosphere, settle into your player, and find a rhythm that works for you.</p></div></section>
 <div class="settings-layout">
-  <aside class="settings-sidebar"><span class="overline">YOUR CAMPUS</span><strong>LocalAcademy</strong><p>A private learning space that runs on your own computer.</p><div class="settings-nav"><a href="#player-preferences" class="is-active">Player preferences</a><a href="#quiet-sections">Silence skip</a><a href="#keyboard-shortcuts">Keyboard shortcuts</a><a href="#privacy">Privacy & data</a></div></aside>
+  <aside class="settings-sidebar"><strong>LocalAcademy</strong><p>A private learning space that runs on your own computer.</p><div class="settings-nav"><a href="#appearance" class="is-active">Appearance</a><a href="#player-preferences">Player preferences</a><a href="#quiet-sections">Silence skip</a><a href="#keyboard-shortcuts">Keyboard shortcuts</a><a href="#privacy">Privacy & data</a></div></aside>
   <div class="settings-main-column">
+    <section class="settings-card appearance-card" id="appearance" aria-labelledby="appearance-title">
+      <div class="settings-card-heading"><h2 id="appearance-title">Your learning atmosphere</h2><span class="settings-icon">{{ icon('palette') }}</span></div>
+      <p class="settings-intro">Choose a palette for your personal campus. Every theme works across your library, player, and study tools.</p>
+      <div class="theme-gallery" role="group" aria-label="Choose a color theme">{% for theme in ui_themes %}{{ theme_choice(theme, preview=true) }}{% endfor %}</div>
+      <label class="system-theme-label"><input type="checkbox" data-theme-system>{{ icon('monitor') }}Follow device appearance <span class="optional-label">Campus by day, Midnight in dark mode</span></label>
+      <p class="appearance-save-note">Theme changes apply immediately and are remembered in this browser.</p>
+    </section>
     <form class="settings-form" id="global-settings-form">
       <section class="settings-card" id="player-preferences">
-        <div class="settings-card-heading"><div><p class="overline">PLAYER</p><h2>How you like to learn</h2></div><span class="settings-icon">◉</span></div>
+        <div class="settings-card-heading"><div><h2>How you like to learn</h2></div><span class="settings-icon">{{ icon('play') }}</span></div>
         <div class="setting-row"><div><label for="setting-speed">Default playback speed</label><p>Start audio and video lessons at this speed.</p></div><select id="setting-speed" name="playback_speed">{% for speed in [0.5, 0.75, 1, 1.25, 1.5, 1.75, 2, 2.5, 3, 4] %}<option value="{{ speed }}" {{ 'selected' if settings.playback_speed == speed else '' }}>{{ speed }}×</option>{% endfor %}</select></div>
         <div class="setting-row"><div><label for="setting-captions">Subtitles & transcript</label><p>Show the first available caption track when a lesson opens.</p></div><label class="switch-control"><input type="checkbox" name="subtitle_enabled" id="setting-captions" value="true" {{ 'checked' if settings.subtitle_enabled else '' }}><span></span><b>{{ 'On' if settings.subtitle_enabled else 'Off' }}</b></label></div>
         <div class="setting-row"><div><label for="setting-advance">Auto-advance lessons</label><p>Move to the next lesson when the current one ends.</p></div><label class="switch-control"><input type="checkbox" name="auto_advance" id="setting-advance" value="true" {{ 'checked' if settings.auto_advance else '' }}><span></span><b>{{ 'On' if settings.auto_advance else 'Off' }}</b></label></div>
@@ -17,7 +24,7 @@
       </section>
 
       <section class="settings-card" id="quiet-sections">
-        <div class="settings-card-heading"><div><p class="overline">SMART PLAYBACK</p><h2>Skip quiet sections</h2></div><label class="switch-control main-switch"><input type="checkbox" name="skip_silence_enabled" value="true" {{ 'checked' if settings.skip_silence_enabled else '' }}><span></span><b>{{ 'On' if settings.skip_silence_enabled else 'Off' }}</b></label></div>
+        <div class="settings-card-heading"><div><h2>Skip quiet sections</h2></div><label class="switch-control main-switch"><input type="checkbox" name="skip_silence_enabled" aria-label="Skip quiet sections" value="true" {{ 'checked' if settings.skip_silence_enabled else '' }}><span></span><b>{{ 'On' if settings.skip_silence_enabled else 'Off' }}</b></label></div>
         <p class="settings-intro">When enabled, LocalAcademy measures waveform loudness with a short hold and release window. Quiet audio is accelerated only after it stays below your threshold, then normal speed returns as soon as sound comes back.</p>
         <div class="setting-row"><div><label for="setting-threshold">Silence threshold</label><p>Signal below this level is treated as silence.</p></div><div class="range-with-value"><input id="setting-threshold" type="range" name="skip_silence_db_threshold" min="-70" max="-20" step="1" value="{{ settings.skip_silence_db_threshold }}" data-setting-range><output data-range-output>{{ settings.skip_silence_db_threshold }} dB</output></div></div>
         <div class="setting-row"><div><label for="setting-min-duration">Minimum quiet duration</label><p>Brief pauses shorter than this are left untouched.</p></div><div class="range-with-value"><input id="setting-min-duration" type="range" name="skip_silence_min_duration" min="0.2" max="2" step="0.05" value="{{ settings.skip_silence_min_duration }}" data-setting-range><output data-range-output>{{ settings.skip_silence_min_duration }} sec</output></div></div>
@@ -25,14 +32,14 @@
       </section>
 
       <section class="settings-card" id="keyboard-shortcuts">
-        <div class="settings-card-heading"><div><p class="overline">CONTROL</p><h2>Keyboard shortcuts</h2></div><span class="settings-icon">⌘</span></div>
+        <div class="settings-card-heading"><div><h2>Keyboard shortcuts</h2></div><span class="settings-icon">{{ icon('keyboard') }}</span></div>
         <div class="shortcut-grid">
           <div><span>Play / pause</span><kbd>Space</kbd></div><div><span>Back / forward 5 seconds</span><kbd>← / →</kbd></div>
           <div><span>Volume</span><kbd>↑ / ↓</kbd></div><div><span>Theater mode</span><kbd>T</kbd></div>
           <div><span>Captions</span><kbd>C</kbd></div><div><span>Fullscreen</span><kbd>F</kbd></div>
           <div><span>Previous / next lesson</span><kbd>Shift + ← / →</kbd></div><div><span>Search library</span><kbd>⌘ / Ctrl + K</kbd></div>
         </div>
-        <div class="desktop-hotkeys"><div><div><strong>System-wide controls</strong><p>On Windows, the optional AutoHotkey helper can control playback while another app is focused.</p></div><a href="{{ url_for('download_hotkeys') }}" class="text-button" download>Helper script <span>↓</span></a></div><code>Numpad 5 play · 4 / 6 seek · 1 / 3 lessons · 8 / 2 volume · 0 captions</code>
+        <div class="desktop-hotkeys"><div><div><strong>System-wide controls</strong><p>On Windows, the optional AutoHotkey helper can control playback while another app is focused.</p></div><a href="{{ url_for('download_hotkeys') }}" class="text-button" download>Helper script {{ icon('download') }}</a></div><code>Numpad 5 play · 4 / 6 seek · 1 / 3 lessons · 8 / 2 volume · 0 captions</code>
           <div class="hotkey-map">
             {% for action, label in [('play_pause', 'Play / pause'), ('rewind_5s', 'Back 5 seconds'), ('forward_5s', 'Forward 5 seconds'), ('prev_file', 'Previous lesson'), ('next_file', 'Next lesson'), ('volume_up', 'Volume up'), ('volume_down', 'Volume down'), ('speed_up', 'Speed up'), ('speed_down', 'Slow down'), ('toggle_subtitles', 'Toggle captions')] %}
             <label>{{ label }}<select data-hotkey-action="{{ action }}"><option value="">None</option>{% for key in range(10) %}<option value="num_{{ key }}" {{ 'selected' if settings.hotkeys.get(action) == 'num_' ~ key else '' }}>Numpad {{ key }}</option>{% endfor %}</select></label>
@@ -42,17 +49,17 @@
       </section>
 
       <section class="settings-card">
-        <div class="settings-card-heading"><div><p class="overline">SHARING</p><h2>Timestamp links</h2></div><span class="settings-icon">↗</span></div>
+        <div class="settings-card-heading"><div><h2>Timestamp links</h2></div><span class="settings-icon">{{ icon('link') }}</span></div>
         <div class="setting-row timestamp-template-row"><div><label for="timestamp-template">Link format</label><p>Choose how copied lesson timestamps look in your notes.</p></div><input id="timestamp-template" class="timestamp-template-input" name="timestamp_template" value="{{ settings.timestamp_template }}" maxlength="300"></div>
         <p class="settings-intro"><code>{HH}</code> <code>{MM}</code> <code>{SS}</code> insert the time. <code>{url}</code> is a shareable lesson link. <code>{timestamp}</code> is seconds.</p>
       </section>
 
       <section class="settings-card" id="privacy">
-        <div class="settings-card-heading"><div><p class="overline">LOCAL FIRST</p><h2>Privacy & data</h2></div><span class="settings-icon">⌂</span></div>
-        <div class="privacy-note"><span class="privacy-check">✓</span><p><strong>Your files never leave your device.</strong><br>Courses are indexed from folders you choose. Progress, notes, bookmarks, and preferences are stored in the local SQLite database.</p></div>
+        <div class="settings-card-heading"><div><h2>Privacy & data</h2></div><span class="settings-icon">{{ icon('folder') }}</span></div>
+        <div class="privacy-note"><span class="privacy-check">{{ icon('check') }}</span><p><strong>You control where your library lives.</strong><br>LocalAcademy indexes folders on the computer running the app. Courses stay in place; progress, notes, bookmarks, and player preferences are stored in its local database. Appearance preferences stay in this browser.</p></div>
         <div class="setting-row reset-row"><div><label>Reset player preferences</label><p>Restore playback and caption preferences to their defaults. Your courses and progress are not affected.</p></div><button class="button button-secondary" id="reset-settings" type="button">Reset preferences</button></div>
       </section>
-      <div class="settings-actions"><span class="save-status" id="settings-save-status">Changes are saved when you press the button.</span><button class="button button-primary" type="submit">Save preferences</button></div>
+      <div class="settings-actions"><span class="save-status" id="settings-save-status" role="status">Changes are saved when you press the button.</span><button class="button button-primary" type="submit">Save preferences</button></div>
       <p class="form-error" id="settings-error" role="alert" hidden></p>
     </form>
   </div>

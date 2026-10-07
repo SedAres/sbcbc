@@ -1,15 +1,12 @@
+{% from '_icons.html' import icon %}
 <article class="continue-card">
-  <a class="continue-art" href="{{ url_for('play', file_hash=item.file.file_hash) }}">
+  <a class="continue-art" href="{{ url_for('play', file_hash=item.file.file_hash) }}" aria-label="Resume {{ item.file.title }}">
     {% if item.file.thumbnail %}<img src="{{ item.file.thumbnail }}" alt="" loading="lazy">
-    {% elif item.file.course.thumbnail %}<img src="{{ item.file.course.thumbnail }}" alt="" loading="lazy">
-    {% else %}<div class="continue-art-placeholder"><span class="play-mark">▶</span><span>{{ item.file.course.display_name[:1]|upper }}</span></div>{% endif %}
-    <span class="resume-overlay"><span class="play-mark">▶</span> Resume</span>
+    {% elif item.course.thumbnail %}<img src="{{ item.course.thumbnail }}" alt="" loading="lazy">
+    {% else %}<div class="continue-art-placeholder cover-tone-{{ (item.course.id % 4) + 1 }}"><span class="continue-art-subject">{{ item.course.categories[0].name if item.course.categories else 'Your course' }}</span><span class="continue-art-title">{{ item.course.display_name }}</span>{{ icon('audio' if item.file.file_type == 'audio' else ('play' if item.file.file_type == 'video' else 'book')) }}</div>{% endif %}
+    <span class="resume-overlay"><span class="play-mark">{{ icon('play') }}</span>Resume lesson</span>
     {% if item.file.duration %}<span class="duration-chip">{{ fmt_dur(item.file.duration) }}</span>{% endif %}
-    <span class="continue-progress"><i style="width: {{ (item.current_time / item.file.duration * 100)|round|int if item.file.duration else 0 }}%"></i></span>
+    <progress class="continue-progress" value="{{ [(item.current_time / item.file.duration * 100)|round|int, 100]|min if item.file.duration else 0 }}" max="100" aria-label="Lesson progress"></progress>
   </a>
-  <div class="continue-card-copy">
-    <a class="continue-title" href="{{ url_for('play', file_hash=item.file.file_hash) }}">{{ item.file.title }}</a>
-    <a class="continue-course" href="{{ url_for('course_detail', course_id=item.course.id) }}">{{ item.course.display_name }}</a>
-    <div class="continue-meta"><span>{{ fmt_dur(item.current_time) }} watched</span><span>·</span><span>{{ item.file.file_type|upper }}</span></div>
-  </div>
+  <div class="continue-card-copy"><a class="continue-course" href="{{ url_for('course_detail', course_id=item.course.id) }}">{{ item.course.display_name }}</a><a class="continue-title" href="{{ url_for('play', file_hash=item.file.file_hash) }}">{{ item.file.title }}</a><div class="continue-meta"><span>{{ icon('clock') }}Resume at {{ fmt_dur(item.current_time) }}</span><span>{{ item.file.file_type|title }}</span></div></div>
 </article>
