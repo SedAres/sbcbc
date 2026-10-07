@@ -35,7 +35,6 @@
   const timeCurrent = $("[data-current-time]");
   const timeDuration = $("[data-duration]");
   const playIcon = $("[data-play-icon]");
-  const completeLabel = $("[data-complete-label]");
   const saveState = $("[data-save-state]");
 
   const fmt = seconds => {
@@ -285,7 +284,11 @@
     }
     if (timeCurrent) timeCurrent.textContent = fmt(state.currentTime);
     if (timeDuration && state.duration) timeDuration.textContent = fmt(state.duration);
-    if (playIcon) playIcon.textContent = media.paused ? "▶" : "Ⅱ";
+    if (playIcon && playIcon.dataset.state !== String(media.paused)) {
+      playIcon.replaceChildren(window.LocalAcademy.icon(media.paused ? "play" : "pause"));
+      playIcon.dataset.state = String(media.paused);
+    }
+    $$('[data-action="toggle-play"]').forEach(button => button.setAttribute("aria-label", media.paused ? "Play lesson" : "Pause lesson"));
     state.playing = !media.paused;
     $("#media-stage")?.classList.toggle("is-paused", media.paused);
     renderActiveCue();
@@ -348,10 +351,12 @@
   function formatTimeStamp(seconds) { return fmt(seconds); }
 
   function setPanelTab(tabName) {
+    if (!$$('[data-panel-tab]').some(button => !button.hidden && button.dataset.panelTab === tabName)) tabName = "lessons";
     $$('[data-panel-tab]').forEach(button => {
       const active = button.dataset.panelTab === tabName;
       button.classList.toggle("is-active", active);
       button.setAttribute("aria-selected", String(active));
+      button.tabIndex = active ? 0 : -1;
     });
     $$('[data-panel-view]').forEach(panel => {
       const active = panel.dataset.panelView === tabName;
@@ -538,12 +543,12 @@
     $("[data-delete-track]")?.addEventListener("click", async () => {
       const track = data.tracks.find(item => item.key === state.selectedTrack);
       if (!track || track.source !== "attached") return;
-      if (!window.confirm(`Remove the attached “${track.label}” caption track?`)) return;
+      if (!await window.LocalAcademy.confirm({ title: "Remove this caption track?", message: `The attached “${track.label}” track will be removed. Your lesson and original sidecar captions stay unchanged.`, confirmLabel: "Remove track", danger: true })) return;
       try {
         const response = await fetch(`/player/subtitles/attached/${track.id}`, { method: "DELETE" });
         if (!response.ok) throw new Error("Could not remove this caption track.");
         data.tracks = data.tracks.filter(item => item.key !== track.key);
-        $$('track[kind="subtitles"]', media).forEach(element => {
+        if (media) $$('track[kind="subtitles"]', media).forEach(element => {
           if (element.src.endsWith(`/attached/${track.id}.vtt`)) element.remove();
         });
         state.selectedTrack = data.tracks[0]?.key || "";
@@ -558,7 +563,21 @@
   }
 
   function initPanelTabs() {
-    $$('[data-panel-tab]').forEach(button => button.addEventListener("click", () => setPanelTab(button.dataset.panelTab)));
+    const tabs = $$('[data-panel-tab]').filter(button => !button.hidden);
+    tabs.forEach(button => {
+      button.addEventListener("click", () => setPanelTab(button.dataset.panelTab));
+      button.addEventListener("keydown", event => {
+        const keys = ["ArrowLeft", "ArrowRight", "Home", "End"];
+        if (!keys.includes(event.key)) return;
+        event.preventDefault();
+        const current = tabs.indexOf(button);
+        const index = event.key === "Home" ? 0 : (event.key === "End" ? tabs.length - 1 : (current + (event.key === "ArrowRight" ? 1 : -1) + tabs.length) % tabs.length);
+        setPanelTab(tabs[index].dataset.panelTab);
+        tabs[index].focus();
+      });
+    });
+    const requested = location.hash.slice(1);
+    setPanelTab(tabs.some(button => button.dataset.panelTab === requested) ? requested : (data.tracks.length ? "transcript" : "lessons"));
   }
 
   function buildSavedItem(type, item) {
@@ -567,22 +586,23 @@
     const jump = document.createElement("button");
     jump.type = "button";
     jump.className = "saved-item-jump";
+    const file = fileById.get(Number(item.file_id));
+    const timedLesson = ["audio", "video"].includes(file?.file_type);
     const time = document.createElement("span");
     time.className = "saved-item-time";
-    time.textContent = item.timestamp == null ? "GENERAL NOTE" : fmt(item.timestamp);
+    time.textContent = item.timestamp == null ? "General note" : (timedLesson ? fmt(item.timestamp) : "Lesson");
     const copy = document.createElement("span");
     copy.className = "saved-item-copy";
     const title = document.createElement("strong");
-    title.textContent = type === "note" ? item.content : (item.label || "Saved moment");
+    title.textContent = type === "note" ? item.content : (item.label || (timedLesson ? "Saved moment" : "Saved lesson"));
     const source = document.createElement("small");
-    const file = fileById.get(Number(item.file_id));
     source.textContent = file?.title || "Course lesson";
     copy.append(title, source);
     jump.append(time, copy);
     jump.addEventListener("click", () => {
       const target = fileById.get(Number(item.file_id));
       if (target && target.file_hash !== data.fileHash) {
-        window.location.assign(`/player/${target.file_hash}${item.timestamp != null ? `?t=${Math.floor(item.timestamp)}` : ""}`);
+        window.location.assign(`/player/${target.file_hash}${timedLesson && item.timestamp != null ? `?t=${Math.floor(item.timestamp)}` : ""}`);
       } else if (media && item.timestamp != null) {
         seekTo(item.timestamp);
       }
@@ -590,7 +610,7 @@
     const remove = document.createElement("button");
     remove.type = "button";
     remove.className = "saved-item-delete";
-    remove.textContent = "×";
+    remove.append(window.LocalAcademy.icon("close"));
     remove.setAttribute("aria-label", type === "note" ? "Delete note" : "Delete bookmark");
     remove.addEventListener("click", event => {
       event.stopPropagation();
@@ -620,12 +640,14 @@
     const form = $("[data-note-form]");
     const timestampOption = $('input[name="timestamped"]', form);
     $$('[data-action="note"]').forEach(button => button.addEventListener("click", () => {
-      composer.hidden = false;
+      const error = $("[data-note-error]", form);
+      if (error) error.hidden = true;
+      window.LocalAcademy.openModal(composer);
       updateNoteTime();
       $("textarea", form)?.focus();
     }));
-    $$('[data-action="close-note"]').forEach(button => button.addEventListener("click", () => { composer.hidden = true; }));
-    composer?.addEventListener("click", event => { if (event.target === composer) composer.hidden = true; });
+    $$('[data-action="close-note"]').forEach(button => button.addEventListener("click", () => window.LocalAcademy.closeModal(composer)));
+    composer?.addEventListener("click", event => { if (event.target === composer) window.LocalAcademy.closeModal(composer); });
     form?.addEventListener("submit", async event => {
       event.preventDefault();
       const textarea = $("textarea", form);
@@ -633,6 +655,11 @@
       const content = textarea.value.trim();
       if (!content) return;
       const timestamp = timestampOption.checked ? state.currentTime : null;
+      const submit = $('button[type="submit"]', form);
+      if (submit.disabled) return;
+      submit.disabled = true;
+      submit.textContent = "Saving note…";
+      composer.setAttribute("aria-busy", "true");
       try {
         const response = await fetch(`/player/notes/${encodeURIComponent(data.fileHash)}`, {
           method: "POST", headers: { "Content-Type": "application/json", "Accept": "application/json" },
@@ -643,17 +670,23 @@
         data.notes.unshift(result.note);
         data.allNotes.unshift(result.note);
         textarea.value = "";
-        composer.hidden = true;
+        composer.removeAttribute("aria-busy");
+        window.LocalAcademy.closeModal(composer);
+        setPanelTab("notes");
         renderSavedItems();
         notify("Note saved to this course.");
       } catch (error) {
         if (errorBox) { errorBox.textContent = error.message; errorBox.hidden = false; }
+      } finally {
+        submit.disabled = false;
+        submit.textContent = "Save note";
+        composer.removeAttribute("aria-busy");
       }
     });
   }
 
   async function deleteNote(noteId) {
-    if (!window.confirm("Delete this note?")) return;
+    if (!await window.LocalAcademy.confirm({ title: "Delete this note?", message: "This note will be removed from your course notebook. This can’t be undone.", confirmLabel: "Delete note", danger: true })) return;
     try {
       const response = await fetch(`/player/notes/${noteId}`, { method: "DELETE" });
       if (!response.ok) throw new Error("Could not delete this note.");
@@ -668,17 +701,22 @@
     const composer = $("[data-bookmark-composer]");
     const form = $("[data-bookmark-form]");
     $$('[data-action="bookmark"]').forEach(button => button.addEventListener("click", () => {
-      composer.hidden = false;
+      window.LocalAcademy.openModal(composer);
       const label = $('input[name="label"]', form);
       if (label) { label.value = ""; label.focus(); }
       const time = $("[data-bookmark-time]", form);
       if (time) time.textContent = fmt(state.currentTime);
     }));
-    $$('[data-action="close-bookmark"]').forEach(button => button.addEventListener("click", () => { composer.hidden = true; }));
-    composer?.addEventListener("click", event => { if (event.target === composer) composer.hidden = true; });
+    $$('[data-action="close-bookmark"]').forEach(button => button.addEventListener("click", () => window.LocalAcademy.closeModal(composer)));
+    composer?.addEventListener("click", event => { if (event.target === composer) window.LocalAcademy.closeModal(composer); });
     form?.addEventListener("submit", async event => {
       event.preventDefault();
       const label = $('input[name="label"]', form).value.trim() || `Moment at ${fmt(state.currentTime)}`;
+      const submit = $('button[type="submit"]', form);
+      if (submit.disabled) return;
+      submit.disabled = true;
+      submit.textContent = "Saving moment…";
+      composer.setAttribute("aria-busy", "true");
       try {
         const response = await fetch(`/player/bookmarks/${encodeURIComponent(data.fileHash)}`, {
           method: "POST", headers: { "Content-Type": "application/json", "Accept": "application/json" },
@@ -688,15 +726,22 @@
         if (!response.ok) throw new Error(result.error || "Could not save this moment.");
         data.bookmarks.push(result.bookmark);
         data.allBookmarks.push(result.bookmark);
-        composer.hidden = true;
+        composer.removeAttribute("aria-busy");
+        window.LocalAcademy.closeModal(composer);
+        setPanelTab("bookmarks");
         renderSavedItems();
         notify("Moment saved.");
       } catch (error) { notify(error.message, "error"); }
+      finally {
+        submit.disabled = false;
+        submit.textContent = "Save moment";
+        composer.removeAttribute("aria-busy");
+      }
     });
   }
 
   async function deleteBookmark(bookmarkId) {
-    if (!window.confirm("Remove this saved moment?")) return;
+    if (!await window.LocalAcademy.confirm({ title: "Remove this saved moment?", message: "The bookmark will be removed. Your lesson and learning progress stay unchanged.", confirmLabel: "Remove bookmark", danger: true })) return;
     try {
       const response = await fetch(`/player/bookmarks/${bookmarkId}`, { method: "DELETE" });
       if (!response.ok) throw new Error("Could not remove this saved moment.");
@@ -728,7 +773,19 @@
     finally { state.saving = false; }
   }
 
+  function updateCompletionUI() {
+    $$("[data-complete-label]").forEach(label => { label.textContent = data.completed ? "Completed" : "Mark complete"; });
+    $$('[data-action="mark-complete"]').forEach(button => {
+      button.classList.toggle("is-complete", data.completed);
+      button.setAttribute("aria-pressed", String(data.completed));
+    });
+  }
+
   async function markComplete() {
+    if (state.completionSaving) return;
+    state.completionSaving = true;
+    const buttons = $$('[data-action="mark-complete"]');
+    buttons.forEach(button => { button.disabled = true; });
     const nextValue = !data.completed;
     try {
       const response = await fetch(`/api/mark-watched/${encodeURIComponent(data.fileHash)}`, {
@@ -738,11 +795,14 @@
       const result = await response.json();
       if (!response.ok) throw new Error(result.error || "Could not update lesson completion.");
       data.completed = Boolean(result.completed);
-      if (completeLabel) completeLabel.textContent = data.completed ? "Completed" : "Mark complete";
-      $$('[data-action="mark-complete"]').forEach(button => button.classList.toggle("is-complete", data.completed));
+      updateCompletionUI();
       if (media) saveProgress(data.completed);
       notify(data.completed ? "Lesson marked complete." : "Lesson marked incomplete.");
     } catch (error) { notify(error.message, "error"); }
+    finally {
+      state.completionSaving = false;
+      buttons.forEach(button => { button.disabled = false; });
+    }
   }
 
   async function shareTimestamp() {
@@ -824,7 +884,10 @@
     $("[data-action=zoom-image]")?.addEventListener("click", event => {
       const image = $("#lesson-image");
       image?.classList.toggle("is-zoomed");
-      event.currentTarget.textContent = image?.classList.contains("is-zoomed") ? "−" : "＋";
+      const zoomed = Boolean(image?.classList.contains("is-zoomed"));
+      event.currentTarget.replaceChildren(window.LocalAcademy.icon(zoomed ? "minus" : "plus"));
+      event.currentTarget.setAttribute("aria-label", zoomed ? "Zoom out" : "Zoom image");
+      event.currentTarget.setAttribute("aria-pressed", String(zoomed));
     });
 
     const seekFromPointer = event => {
@@ -848,6 +911,7 @@
     });
 
     document.addEventListener("keydown", event => {
+      if (event.defaultPrevented) return;
       if (event.key === "Escape" && document.body.classList.contains("theater-active")) { setTheater(false); return; }
       if (isTextInput(event.target) || (event.target instanceof HTMLElement && event.target.closest("button, a, select, [role='slider']")) || event.metaKey || event.ctrlKey || event.altKey) return;
       if (event.key === " " || event.code === "Space") { event.preventDefault(); togglePlay(); }
@@ -905,8 +969,7 @@
       await saveProgress(true);
       if (!data.completed) {
         data.completed = true;
-        if (completeLabel) completeLabel.textContent = "Completed";
-        $$('[data-action="mark-complete"]').forEach(button => button.classList.add("is-complete"));
+        updateCompletionUI();
       }
       if (data.settings?.auto_advance) window.setTimeout(() => navigateLesson(1), 900);
     });
@@ -1021,6 +1084,7 @@
     initTextReader();
     initEpubReader();
     renderSavedItems();
+    updateCompletionUI();
     if (media) {
       if (state.currentTime > 0 && !Number.isFinite(media.duration)) state.currentTime = Number(data.startTime || 0);
       updateNoteTime();

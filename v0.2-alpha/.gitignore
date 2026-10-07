@@ -7,3 +7,4 @@ instance/
 *.db-wal
 /v1-alpha/
 /v1-alpha.zip
+.cache/

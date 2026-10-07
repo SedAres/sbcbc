@@ -1,92 +1,75 @@
+{% from '_icons.html' import icon %}
+{% from '_theme_options.html' import theme_choice %}
 <!doctype html>
-<html lang="en" data-theme="dark">
+<html lang="en" data-theme="campus">
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <meta name="color-scheme" content="dark light">
-  <meta name="theme-color" content="#090909">
-  <title>{% block title %}LocalAcademy{% endblock %} · LocalAcademy</title>
-  <script>
-    try { document.documentElement.dataset.theme = localStorage.getItem('la-theme') || 'dark'; } catch (_) {}
-  </script>
+  <meta name="color-scheme" content="light dark">
+  <meta name="theme-color" content="#f7f9f6">
+  <meta name="description" content="Your private learning workspace. Organize local courses, pick up a lesson, and keep your notes in one place.">
+  <title>{% block title %}Dashboard{% endblock %} · LocalAcademy</title>
+  <script src="{{ url_for('static', filename='js/theme.js') }}"></script>
+  <link rel="icon" type="image/svg+xml" href="{{ url_for('static', filename='img/favicon.svg') }}">
+  <link rel="preload" href="{{ url_for('static', filename='fonts/onest-latin-400-normal.woff2') }}" as="font" type="font/woff2" crossorigin>
+  <link rel="preload" href="{{ url_for('static', filename='fonts/bricolage-grotesque-latin-600-normal.woff2') }}" as="font" type="font/woff2" crossorigin>
+  <link rel="stylesheet" href="{{ url_for('static', filename='fonts/fonts.css') }}">
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/themes.css') }}">
   <link rel="stylesheet" href="{{ url_for('static', filename='css/app.css') }}">
   {% block head %}{% endblock %}
 </head>
 <body class="{% if request.endpoint == 'play' %}player-route{% endif %}">
+  <a class="skip-link" href="#page-main">Skip to content</a>
   <div class="app-shell">
-    <aside class="sidebar" id="sidebar" aria-label="Main navigation">
-      <a class="brand" href="{{ url_for('index') }}" aria-label="LocalAcademy home">
-        <span class="brand-mark" aria-hidden="true">
-          <svg viewBox="0 0 32 32" fill="none"><path d="M7 23.5V8.5h4.1l9.8 10.8V8.5H25v15h-4L11 12.7v10.8H7Z" fill="currentColor"/><path d="M5 27h22" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" opacity=".5"/></svg>
-        </span>
-        <span class="brand-name">LocalAcademy<span>YOUR PRIVATE CAMPUS</span></span>
-      </a>
-
-      <nav class="primary-nav">
-        <p class="nav-label">Workspace</p>
-        <a href="{{ url_for('index') }}" class="nav-link {{ 'is-active' if request.endpoint == 'index' else '' }}">
-          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m3 10 9-7 9 7v10a1 1 0 0 1-1 1h-5v-7H9v7H4a1 1 0 0 1-1-1V10Z"/></svg><span>Overview</span>
-        </a>
-        <a href="{{ url_for('courses') }}" class="nav-link {{ 'is-active' if request.endpoint in ['courses', 'course_detail', 'course_settings'] else '' }}">
-          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 4.75A1.75 1.75 0 0 1 5.75 3H20v17H5.75A1.75 1.75 0 0 1 4 18.25v-13.5ZM4 17.5h16M8 7h8M8 10.5h8"/></svg><span>Course library</span>
-          <span class="nav-count">{{ (stats.courses if stats is defined else '') }}</span>
-        </a>
-        <a href="{{ url_for('continue_watching') }}" class="nav-link {{ 'is-active' if request.endpoint == 'continue_watching' else '' }}">
-          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 8v4l2.75 1.75M20.5 12a8.5 8.5 0 1 1-2.5-6M20.5 4v5h-5"/></svg><span>Continue learning</span>
-        </a>
-        <a href="{{ url_for('collections') }}" class="nav-link {{ 'is-active' if request.endpoint in ['collections', 'collection_detail'] else '' }}">
-          <svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="4" width="8" height="7" rx="1.5"/><rect x="13" y="4" width="8" height="7" rx="1.5"/><rect x="3" y="13" width="8" height="7" rx="1.5"/><rect x="13" y="13" width="8" height="7" rx="1.5"/></svg><span>Collections</span>
-        </a>
-      </nav>
-
-      <div class="sidebar-divider"></div>
-      <div class="sidebar-note">
-        <span class="status-dot"></span>
-        <div><strong>Private by design</strong><small>Your library stays on this device.</small></div>
+    <aside class="sidebar" id="sidebar" aria-label="Main navigation" tabindex="-1">
+      <div class="sidebar-brand-row">
+        <a class="brand" href="{{ url_for('index') }}" aria-label="LocalAcademy home"><span class="brand-mark">{{ icon('book') }}</span><span class="brand-name">LocalAcademy<span>Your personal campus</span></span></a>
+        <button class="icon-button sidebar-close" id="sidebar-close" type="button" aria-label="Close navigation">{{ icon('close') }}</button>
       </div>
+      <nav class="primary-nav" aria-label="Workspace">
+        <a href="{{ url_for('index') }}" class="nav-link {{ 'is-active' if request.endpoint == 'index' else '' }}" {% if request.endpoint == 'index' %}aria-current="page"{% endif %}>{{ icon('home') }}<span>Dashboard</span></a>
+        <a href="{{ url_for('courses') }}" class="nav-link {{ 'is-active' if request.endpoint in ['courses', 'course_detail', 'course_settings', 'play'] else '' }}" {% if request.endpoint in ['courses', 'course_detail', 'course_settings', 'play'] %}aria-current="page"{% endif %}>{{ icon('library') }}<span>Course library</span><span class="nav-count">{{ library_count }}</span></a>
+        <a href="{{ url_for('continue_watching') }}" class="nav-link {{ 'is-active' if request.endpoint == 'continue_watching' else '' }}" {% if request.endpoint == 'continue_watching' %}aria-current="page"{% endif %}>{{ icon('continue') }}<span>Continue learning</span></a>
+        <a href="{{ url_for('collections') }}" class="nav-link {{ 'is-active' if request.endpoint in ['collections', 'collection_detail'] else '' }}" {% if request.endpoint in ['collections', 'collection_detail'] %}aria-current="page"{% endif %}>{{ icon('grid') }}<span>Collections</span></a>
+      </nav>
+      {% if nav_categories %}
+      <nav class="subject-nav" aria-label="Subjects"><h2 class="nav-label">Your subjects</h2>{% for category in nav_categories %}<a class="subject-link" href="{{ url_for('collection_detail', kind='categories', item_id=category.id) }}"><span class="subject-dot tone-{{ loop.index }}" aria-hidden="true"></span><span>{{ category.name }}</span>{{ icon('chevron-right') }}</a>{% endfor %}</nav>
+      {% endif %}
       <div class="sidebar-bottom">
-        <a class="profile-chip" href="{{ url_for('settings_page') }}">
-          <span class="profile-avatar">L</span>
-          <span class="profile-copy"><strong>My learning space</strong><small>Personal library</small></span>
-          <svg class="profile-settings" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="3"/><path d="m19.4 15 .1.1a1.8 1.8 0 0 1-2.5 2.5l-.1-.1a1.8 1.8 0 0 0-3.1 1.3v.2a1.8 1.8 0 0 1-3.6 0v-.2a1.8 1.8 0 0 0-3.1-1.3l-.1.1a1.8 1.8 0 1 1-2.5-2.5l.1-.1a1.8 1.8 0 0 0-1.3-3.1h-.2a1.8 1.8 0 0 1 0-3.6h.2a1.8 1.8 0 0 0 1.3-3.1l-.1-.1a1.8 1.8 0 0 1 2.5-2.5l.1.1a1.8 1.8 0 0 0 3.1-1.3v-.2a1.8 1.8 0 0 1 3.6 0v.2a1.8 1.8 0 0 0 3.1 1.3l.1-.1a1.8 1.8 0 1 1 2.5 2.5l-.1.1a1.8 1.8 0 0 0 1.3 3.1h.2a1.8 1.8 0 0 1 0 3.6h-.2a1.8 1.8 0 0 0-1.3 3.1Z"/></svg>
-        </a>
+        <a class="nav-link {{ 'is-active' if request.endpoint == 'settings_page' else '' }}" href="{{ url_for('settings_page') }}" {% if request.endpoint == 'settings_page' %}aria-current="page"{% endif %}>{{ icon('settings') }}<span>Preferences</span></a>
+        <div class="sidebar-note">{{ icon('leaf') }}<div><strong>Local. Personal. Yours.</strong><small>Your courses stay in the folders you choose.</small></div></div>
+        <a class="profile-chip" href="{{ url_for('settings_page') }}"><span class="profile-avatar">LA</span><span class="profile-copy"><strong>My workspace</strong><small>{{ 'Sample library' if demo_mode else 'Personal library' }}</small></span>{{ icon('chevron-down') }}</a>
+        <span class="app-version">LocalAcademy <span>v0.2 alpha</span></span>
       </div>
     </aside>
-
+    <button class="sidebar-scrim" id="sidebar-scrim" type="button" aria-label="Close navigation" tabindex="-1" hidden></button>
     <div class="app-main">
       <header class="topbar">
         <div class="topbar-left">
-          <button class="icon-button mobile-menu" id="mobile-menu" type="button" aria-label="Open navigation">
-            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 6h16M4 12h16M4 18h16"/></svg>
-          </button>
-          <div class="topbar-context">{% block breadcrumb %}<span class="context-muted">Your campus</span><span class="context-separator">/</span><span>Overview</span>{% endblock %}</div>
+          <button class="icon-button mobile-menu" id="mobile-menu" type="button" aria-label="Open navigation" aria-controls="sidebar" aria-expanded="false">{{ icon('menu') }}</button>
+          <nav class="topbar-context" aria-label="Breadcrumb">{% block breadcrumb %}<span>My workspace</span><span class="context-separator">/</span><span>Dashboard</span>{% endblock %}</nav>
+          {% if demo_mode %}<span class="demo-badge" title="Illustrative courses in a separate sample database">Sample library</span>{% endif %}
         </div>
         <div class="topbar-actions">
-          <form class="global-search" action="{{ url_for('courses') }}" method="get" role="search" autocomplete="off">
-            <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="10.8" cy="10.8" r="6.8"/><path d="m16 16 4.2 4.2"/></svg>
-            <input type="search" id="global-search-input" name="q" placeholder="Search your library" aria-label="Search courses and lessons">
-            <kbd>⌘ K</kbd>
-            <div class="search-results" id="search-results" hidden></div>
+          <button class="icon-button mobile-search" type="button" id="mobile-search" aria-label="Search library" aria-expanded="false" aria-controls="global-search-form">{{ icon('search') }}</button>
+          <form class="global-search" id="global-search-form" action="{{ url_for('courses') }}" method="get" role="search" autocomplete="off">
+            {{ icon('search') }}<input type="search" id="global-search-input" name="q" placeholder="Search your library…" aria-label="Search courses and lessons" aria-controls="search-results"><kbd data-search-shortcut>Ctrl K</kbd><div class="search-results" id="search-results" role="region" aria-label="Search results" hidden></div><p id="search-status" class="sr-only" role="status"></p>
           </form>
-          <button class="icon-button theme-toggle" id="theme-toggle" type="button" aria-label="Switch color theme" title="Switch color theme">
-            <svg class="theme-sun" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="4"/><path d="M12 2v2m0 16v2M4.93 4.93l1.42 1.42m11.3 11.3 1.42 1.42M2 12h2m16 0h2M4.93 19.07l1.42-1.42m11.3-11.3 1.42-1.42"/></svg>
-          </button>
-          <a class="icon-button settings-shortcut {{ 'is-active' if request.endpoint == 'settings_page' else '' }}" href="{{ url_for('settings_page') }}" aria-label="Settings" title="Settings">
-            <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="3"/><path d="m19.4 15 .1.1a1.8 1.8 0 0 1-2.5 2.5l-.1-.1a1.8 1.8 0 0 0-3.1 1.3v.2a1.8 1.8 0 0 1-3.6 0v-.2a1.8 1.8 0 0 0-3.1-1.3l-.1.1a1.8 1.8 0 1 1-2.5-2.5l.1-.1a1.8 1.8 0 0 0-1.3-3.1h-.2a1.8 1.8 0 0 1 0-3.6h.2a1.8 1.8 0 0 0 1.3-3.1l-.1-.1a1.8 1.8 0 0 1 2.5-2.5l.1.1a1.8 1.8 0 0 0 3.1-1.3v-.2a1.8 1.8 0 0 1 3.6 0v.2a1.8 1.8 0 0 0 3.1 1.3l.1-.1a1.8 1.8 0 1 1 2.5 2.5l-.1.1a1.8 1.8 0 0 0 1.3 3.1h.2a1.8 1.8 0 0 1 0 3.6h-.2a1.8 1.8 0 0 0-1.3 3.1Z"/></svg>
-          </a>
+          <details class="theme-picker" id="theme-picker">
+            <summary class="theme-selector" aria-label="Choose a color theme"><span class="current-theme-swatch" aria-hidden="true"></span><span data-current-theme-name>Campus</span>{{ icon('chevron-down') }}</summary>
+            <div class="theme-popover"><div class="theme-popover-heading"><strong>Make yourself at home</strong><span>Choose your learning atmosphere.</span></div><div class="theme-options" role="group" aria-label="Color themes">{% for theme in ui_themes %}{{ theme_choice(theme) }}{% endfor %}</div><label class="system-theme-label"><input type="checkbox" data-theme-system>{{ icon('monitor') }}Use device appearance</label><a class="theme-settings-link" href="{{ url_for('settings_page') }}#appearance">Appearance settings {{ icon('arrow-right') }}</a></div>
+          </details>
+          <a class="topbar-avatar" href="{{ url_for('settings_page') }}" aria-label="Workspace preferences">LA</a>
         </div>
       </header>
-
-      <main class="page-main" id="page-main">
-        {% with messages = get_flashed_messages(with_categories=true) %}
-          {% if messages %}<div class="flash-stack">{% for category, message in messages %}<div class="flash-message {{ category }}">{{ message }}</div>{% endfor %}</div>{% endif %}
-        {% endwith %}
+      <main class="page-main" id="page-main" tabindex="-1">
+        {% with messages = get_flashed_messages(with_categories=true) %}{% if messages %}<div class="flash-stack">{% for category, message in messages %}<div class="flash-message {{ category }}" role="status">{{ message }}</div>{% endfor %}</div>{% endif %}{% endwith %}
         {% block content %}{% endblock %}
+        <footer class="workspace-footer"><span>{{ icon('book') }}A little progress, at your own pace.</span><a href="{{ url_for('settings_page') }}#privacy">Your data stays local {{ icon('arrow-up-right') }}</a></footer>
       </main>
     </div>
   </div>
-
-  <div class="toast-region" id="toast-region" aria-live="polite" aria-atomic="true"></div>
+  <div class="toast-region" id="toast-region" aria-live="polite" aria-atomic="false"></div>
   <script src="{{ url_for('static', filename='js/app.js') }}" defer></script>
   {% block scripts %}{% endblock %}
 </body>

@@ -1,0 +1,17 @@
+<div class="modal-backdrop" id="add-course-modal" {% if not show_add_modal|default(false) %}hidden{% endif %}>
+  <section class="modal-card" role="dialog" aria-modal="true" aria-labelledby="add-course-title" aria-describedby="add-course-description" tabindex="-1">
+    <div class="modal-heading"><div><h2 id="add-course-title">A new place to learn</h2><p id="add-course-description">Add a course folder from the computer running LocalAcademy.</p></div><button class="icon-button" type="button" data-close-modal aria-label="Close">{{ icon('close') }}</button></div>
+    <form id="add-course-form" class="form-stack">
+      <label>Course name<input name="display_name" required maxlength="255" placeholder="e.g. Foundations of visual design" autocomplete="off"></label>
+      <label>Folder path<input name="root_path" required placeholder="/Users/you/Courses/design or D:\Courses\design" aria-describedby="folder-path-hint" autocomplete="off" spellcheck="false"></label>
+      <p class="field-hint" id="folder-path-hint">Your files stay where they are. LocalAcademy indexes the folder; it doesn’t copy or upload it.</p>
+      <details class="import-optional-details"><summary>Add a description, instructor, or tags {{ icon('chevron-down') }}</summary><div class="form-stack">
+        <label>Short description <span class="optional-label">Optional</span><textarea name="description" rows="3" placeholder="What would you like to learn?"></textarea></label>
+        <div class="form-two-column"><label>Instructor(s)<input name="creator_names" placeholder="Names, separated by commas"></label><label>Categories<input name="category_names" placeholder="Design, Fundamentals"></label></div>
+        <label>Tags<input name="tag_names" placeholder="Beginner, Video, Reference"></label>
+      </div></details>
+      <div class="modal-actions"><button class="button button-secondary" type="button" data-close-modal>Cancel</button><button class="button button-primary" type="submit"><span data-submit-label>Add to library</span>{{ icon('arrow-right') }}</button></div>
+      <p class="form-error" id="add-course-error" role="alert" hidden></p>
+    </form>
+  </section>
+</div>
