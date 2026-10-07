@@ -1,0 +1,65 @@
+{% extends "base.html" %}
+{% block title %}Course library{% endblock %}
+{% block breadcrumb %}<span class="context-muted">Your campus</span><span class="context-separator">/</span><span>Course library</span>{% endblock %}
+{% block content %}
+<section class="page-heading library-heading">
+  <div><p class="overline">A HOME FOR EVERYTHING YOU’RE LEARNING</p><h1>Course library<span class="heading-period">.</span></h1><p class="page-subtitle">Your saved courses, lessons, and learning resources.</p></div>
+  <button class="button button-primary" type="button" data-open-add><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg>Add a course</button>
+</section>
+
+<div class="library-toolbar">
+  <div class="filter-tabs" role="tablist" aria-label="Filter courses">
+    <a href="{{ url_for('courses', filter='all') }}" class="filter-tab {{ 'is-selected' if filter_type == 'all' else '' }}">All courses<span>{{ courses|length if filter_type == 'all' else '' }}</span></a>
+    <a href="{{ url_for('courses', filter='progress') }}" class="filter-tab {{ 'is-selected' if filter_type == 'progress' else '' }}">In progress</a>
+    <a href="{{ url_for('courses', filter='available') }}" class="filter-tab {{ 'is-selected' if filter_type == 'available' else '' }}">Available</a>
+    <a href="{{ url_for('courses', filter='unavailable') }}" class="filter-tab {{ 'is-selected' if filter_type == 'unavailable' else '' }}">Offline</a>
+  </div>
+  <div class="library-tools">
+    <label class="local-filter"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="10.8" cy="10.8" r="6.8"/><path d="m16 16 4.2 4.2"/></svg><input type="search" id="course-filter" value="{{ request.args.get('q', '') }}" placeholder="Filter courses" aria-label="Filter courses"></label>
+    <div class="view-switch" aria-label="Layout">
+      <a href="{{ url_for('courses', filter=filter_type, view='grid') }}" class="{{ 'is-selected' if view_mode == 'grid' else '' }}" aria-label="Grid view" title="Grid view"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="4" y="4" width="6" height="6" rx="1"/><rect x="14" y="4" width="6" height="6" rx="1"/><rect x="4" y="14" width="6" height="6" rx="1"/><rect x="14" y="14" width="6" height="6" rx="1"/></svg></a>
+      <a href="{{ url_for('courses', filter=filter_type, view='list') }}" class="{{ 'is-selected' if view_mode == 'list' else '' }}" aria-label="List view" title="List view"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 6h11M9 12h11M9 18h11M4 6h.01M4 12h.01M4 18h.01"/></svg></a>
+    </div>
+  </div>
+</div>
+
+{% if courses %}
+  <div class="course-grid {{ 'is-hidden' if view_mode == 'list' else '' }}" id="course-grid">
+    {% for course in courses %}{% include "_course_card.html" %}{% endfor %}
+  </div>
+  <div class="course-list {{ 'is-visible' if view_mode == 'list' else '' }}" id="course-list">
+    {% for course in courses %}{% set card = course_cards.get(course.id, {}) %}
+      <article class="course-list-row" data-course-card data-title="{{ course.display_name|lower }}" data-status="{{ 'unavailable' if not course.is_available else ('completed' if card.get('total', 0) and card.get('watched', 0) == card.get('total', 0) else ('progress' if card.get('in_progress') else 'new')) }}">
+        <a class="list-cover" href="{{ url_for('course_detail', course_id=course.id) }}">{% if course.thumbnail %}<img src="{{ course.thumbnail }}" alt="">{% else %}<span>{{ course.display_name[:1]|upper }}</span>{% endif %}</a>
+        <div class="list-course-copy"><a href="{{ url_for('course_detail', course_id=course.id) }}" class="list-course-title">{{ course.display_name }}</a><span>{{ course.creators|map(attribute='name')|join(', ') if course.creators else 'Personal library' }}</span></div>
+        <span class="list-course-count">{{ card.get('total', course.total_files or 0) }} lessons{% if course.total_duration %} · {{ fmt_dur_h(course.total_duration) }}{% endif %}</span>
+        <span class="availability-label {{ 'offline' if not course.is_available else '' }}"><i></i>{{ 'Offline' if not course.is_available else 'Available' }}</span>
+        <div class="list-progress"><div class="progress-track"><span style="width: {{ card.get('percent', 0) }}%"></span></div><span>{{ card.get('percent', 0) }}%</span></div>
+        <a class="icon-button list-open" href="{{ url_for('course_detail', course_id=course.id) }}" aria-label="Open {{ course.display_name }}">→</a>
+      </article>
+    {% endfor %}
+  </div>
+  <p class="filter-empty" id="filter-empty" hidden>No courses match your search.</p>
+{% else %}
+  <div class="empty-state library-empty">
+    <div class="empty-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 4.75A1.75 1.75 0 0 1 5.75 3H20v17H5.75A1.75 1.75 0 0 1 4 18.25v-13.5ZM4 17.5h16M8 7h8M8 10.5h5"/></svg></div>
+    <h2>No courses yet</h2><p>Start your library by adding a folder from your computer.</p><button class="button button-primary" data-open-add type="button">Add your first course</button>
+  </div>
+{% endif %}
+
+<div class="modal-backdrop" id="add-course-modal" {% if not show_add_modal %}hidden{% endif %}>
+  <section class="modal-card" role="dialog" aria-modal="true" aria-labelledby="add-course-title">
+    <div class="modal-heading"><div><p class="overline">GROW YOUR LIBRARY</p><h2 id="add-course-title">Add a course</h2><p>Choose a folder on the computer running LocalAcademy.</p></div><button class="icon-button" type="button" data-close-modal aria-label="Close">×</button></div>
+    <form id="add-course-form" class="form-stack">
+      <label>Course name<input name="display_name" required maxlength="255" placeholder="e.g. Introduction to design"></label>
+      <label>Folder path<input name="root_path" required placeholder="/Users/you/Courses/design or D:\\Courses\\design"></label>
+      <p class="field-hint">LocalAcademy scans the folder and keeps its files in place. Nothing is uploaded.</p>
+      <label>Short description <span class="optional-label">Optional</span><textarea name="description" rows="3" placeholder="What will you learn?"></textarea></label>
+      <div class="form-two-column"><label>Instructor(s) <span class="optional-label">Optional</span><input name="creator_names" placeholder="Separate names with commas"></label><label>Categories <span class="optional-label">Optional</span><input name="category_names" placeholder="Design, Fundamentals"></label></div>
+      <label>Tags <span class="optional-label">Optional</span><input name="tag_names" placeholder="Beginner, Video, Reference"></label>
+      <div class="modal-actions"><button class="button button-secondary" type="button" data-close-modal>Cancel</button><button class="button button-primary" type="submit"><span>Add to library</span><span class="button-spinner" hidden></span></button></div>
+      <p class="form-error" id="add-course-error" role="alert" hidden></p>
+    </form>
+  </section>
+</div>
+{% endblock %}

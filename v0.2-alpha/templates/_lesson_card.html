@@ -1,0 +1,15 @@
+<article class="continue-card">
+  <a class="continue-art" href="{{ url_for('play', file_hash=item.file.file_hash) }}">
+    {% if item.file.thumbnail %}<img src="{{ item.file.thumbnail }}" alt="" loading="lazy">
+    {% elif item.file.course.thumbnail %}<img src="{{ item.file.course.thumbnail }}" alt="" loading="lazy">
+    {% else %}<div class="continue-art-placeholder"><span class="play-mark">▶</span><span>{{ item.file.course.display_name[:1]|upper }}</span></div>{% endif %}
+    <span class="resume-overlay"><span class="play-mark">▶</span> Resume</span>
+    {% if item.file.duration %}<span class="duration-chip">{{ fmt_dur(item.file.duration) }}</span>{% endif %}
+    <span class="continue-progress"><i style="width: {{ (item.current_time / item.file.duration * 100)|round|int if item.file.duration else 0 }}%"></i></span>
+  </a>
+  <div class="continue-card-copy">
+    <a class="continue-title" href="{{ url_for('play', file_hash=item.file.file_hash) }}">{{ item.file.title }}</a>
+    <a class="continue-course" href="{{ url_for('course_detail', course_id=item.course.id) }}">{{ item.course.display_name }}</a>
+    <div class="continue-meta"><span>{{ fmt_dur(item.current_time) }} watched</span><span>·</span><span>{{ item.file.file_type|upper }}</span></div>
+  </div>
+</article>
