@@ -1,0 +1,117 @@
+/* LocalAcademy v0.3 — Duolingo-style design tokens.
+   White app-like foundation, vivid green primary actions, chunky rounded
+   geometry, cartoon-physical (hard bottom-edge) depth. Components consume
+   the semantic tokens below; the --duo-* tokens are the spec palette.
+   "duo" is the design; "duo-night" is its dark extension (same roles). */
+:root {
+  --duo-green: #58cc02;
+  --duo-green-deep: #46a302;
+  --duo-green-soft: #d7ffb8;
+  --duo-white: #ffffff;
+  --duo-surface: #f7f7f7;
+  --duo-ink: #4b4b4b;
+  --duo-muted: #777777;
+  --duo-blue: #1cb0f6;
+  --duo-yellow: #ffd900;
+  --duo-red: #ff4b4b;
+  --duo-border: #e5e5e5;
+  --duo-shadow: #d7d7d7;
+  --duo-focus: #84d8ff;
+  --duo-purple: #ce82ff;
+
+  --font-display: "din-round", "Nunito", "Avenir Next Rounded", system-ui, sans-serif;
+  --font-body: "din-round", "Nunito", system-ui, -apple-system, "Segoe UI", sans-serif;
+  --font-mono: "SF Mono", ui-monospace, Menlo, monospace;
+  --sidebar-width: 264px;
+  --topbar-height: 72px;
+  --radius-xs: 12px;
+  --radius-sm: 16px;
+  --radius-md: 16px;
+  --radius-lg: 24px;
+  --ease-out: cubic-bezier(.34, 1.3, .5, 1);
+  --z-header: 20;
+  --z-nav: 40;
+  --z-modal: 60;
+  --z-toast: 80;
+  font-synthesis: none;
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+:root, html[data-theme="duo"], .theme-preview[data-preview-theme="duo"] {
+  color-scheme: light;
+  --page: #ffffff;
+  --sidebar: #ffffff;
+  --surface: #ffffff;
+  --surface-raised: #f7f7f7;
+  --surface-soft: #f0f0f0;
+  --surface-hover: #f7f7f7;
+  --line: #e5e5e5;
+  --line-strong: #cfcfcf;
+  --input-line: #e5e5e5;
+  --text: #4b4b4b;
+  --text-soft: #4b4b4b;
+  --muted: #777777;
+  --faint: #afafaf;
+  --primary: #58cc02;
+  --primary-ink: #ffffff;
+  --primary-hover: #61e002;
+  --primary-deep: #46a302;
+  --accent-soft: #d7ffb8;
+  --feature: #d7ffb8;
+  --feature-ink: #3c8500;
+  --feature-muted: #58a700;
+  --success: #58cc02;
+  --success-soft: #d7ffb8;
+  --warning: #b8860b;
+  --warning-soft: #fff3b8;
+  --danger: #ff4b4b;
+  --danger-soft: #ffe1e1;
+  --info: #1cb0f6;
+  --reward: #ffd900;
+  --purple: #ce82ff;
+  --shadow: 0 6px 0 #d7d7d7;
+  --shadow-small: 0 2px 0 #d7d7d7;
+  --scrim: rgb(38 53 18 / 48%);
+  --media-ground: #131f24;
+}
+html[data-theme="duo-night"], .theme-preview[data-preview-theme="duo-night"] {
+  color-scheme: dark;
+  --page: #131f24;
+  --sidebar: #131f24;
+  --surface: #1b2a32;
+  --surface-raised: #1b2a32;
+  --surface-soft: #243842;
+  --surface-hover: #243842;
+  --line: #37464f;
+  --line-strong: #4c606c;
+  --input-line: #37464f;
+  --text: #f1f7fb;
+  --text-soft: #dbe6ec;
+  --muted: #afc2cc;
+  --faint: #8ba0ad;
+  --primary: #58cc02;
+  --primary-ink: #ffffff;
+  --primary-hover: #61e002;
+  --primary-deep: #46a302;
+  --accent-soft: #2e4a1e;
+  --feature: #263d17;
+  --feature-ink: #a5ed6e;
+  --feature-muted: #8ed254;
+  --success: #58cc02;
+  --success-soft: #2e4a1e;
+  --warning: #ffd900;
+  --warning-soft: #4a3f10;
+  --danger: #ff6b6b;
+  --danger-soft: #4a2525;
+  --info: #1cb0f6;
+  --reward: #ffd900;
+  --purple: #ce82ff;
+  --shadow: 0 6px 0 rgb(0 0 0 / 35%);
+  --shadow-small: 0 2px 0 rgb(0 0 0 / 35%);
+  --scrim: rgb(3 10 13 / 66%);
+  --media-ground: #0b1418;
+}
+/* Theme-picker swatches (also used by the settings previews). */
+.swatch-duo { background: linear-gradient(135deg, #58cc02 0 55%, #d7ffb8 55% 100%); }
+.swatch-duo-night { background: linear-gradient(135deg, #131f24 0 55%, #58cc02 55% 100%); }

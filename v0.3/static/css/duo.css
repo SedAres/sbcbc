@@ -1,0 +1,131 @@
+/* ============================================================
+   LocalAcademy v0.3 — Duolingo-style layer (loaded last).
+   Chunky, pressable, toy-like controls; hard bottom-edge depth
+   instead of soft SaaS shadows; bright reward accents on a white
+   app-like foundation. Semantic tokens come from themes.css.
+   ============================================================ */
+
+body { font-family: var(--font-body); font-weight: 700; color: var(--text); background: var(--page); }
+h1, h2, h3 { font-family: var(--font-display); font-weight: 900; letter-spacing: -.015em; }
+.page-heading h1 { font-size: clamp(30px, 4vw, 44px); line-height: 1.08; }
+::selection { background: var(--duo-green-soft); }
+:focus-visible { outline: none; box-shadow: 0 0 0 4px rgb(132 216 255 / .45); border-radius: 12px; }
+
+/* --- Chrome: white sidebar, chunky pill navigation --- */
+.sidebar { background: var(--sidebar); border-right: 2px solid var(--line); }
+.brand-name { font-family: var(--font-display); font-weight: 900; color: var(--primary-deep); }
+.brand-name span { color: var(--muted); font-weight: 700; }
+.brand-mark { background: transparent; box-shadow: none; }
+.brand-mark img { width: 42px; height: 42px; }
+.nav-link { border: 2px solid transparent; border-radius: 16px; font-weight: 800; text-transform: none; }
+.nav-link:hover { background: var(--surface-raised); }
+.nav-link.is-active { background: var(--accent-soft); border-color: var(--primary); color: var(--feature-ink); }
+.nav-count, .section-count { background: var(--duo-yellow); color: #7a5c00; border-radius: 999px; font-weight: 900; }
+.subject-dot.tone-1 { background: var(--duo-green); } .subject-dot.tone-2 { background: var(--duo-blue); }
+.subject-dot.tone-3 { background: var(--duo-yellow); } .subject-dot.tone-4 { background: var(--duo-purple); }
+.sidebar-note { background: var(--surface-raised); border: 2px solid var(--line); border-radius: 20px; }
+.profile-avatar, .topbar-avatar { background: var(--duo-green); color: #fff; border-radius: 50%; font-weight: 900; }
+.demo-badge { background: var(--duo-yellow); color: #7a5c00; border-radius: 999px; font-weight: 900; }
+
+/* --- Topbar & search --- */
+.topbar { background: var(--page); border-bottom: 2px solid var(--line); }
+.global-search, .local-filter, .lesson-filter { border: 2px solid var(--line); border-radius: 16px; background: var(--surface-raised); }
+.global-search:focus-within, .local-filter:focus-within, .lesson-filter:focus-within {
+  border-color: var(--duo-blue); box-shadow: 0 0 0 4px rgb(132 216 255 / .35); background: var(--surface); }
+kbd { font-family: var(--font-mono); background: var(--surface); border: 1px solid var(--line); border-bottom-width: 3px; border-radius: 8px; }
+.search-results, .theme-popover, .modal-card { border: 2px solid var(--line); border-radius: 24px; box-shadow: 0 6px 0 var(--duo-shadow); }
+html[data-theme="duo-night"] .search-results, html[data-theme="duo-night"] .theme-popover,
+html[data-theme="duo-night"] .modal-card { box-shadow: 0 6px 0 rgb(0 0 0 / 35%); }
+
+/* --- Buttons: the pressable, toy-like core --- */
+.button { min-height: 50px; padding: 0 20px; border-radius: 16px; border: 2px solid transparent;
+  font-family: var(--font-display); font-size: 15px; font-weight: 900; letter-spacing: .05em; text-transform: uppercase;
+  transition: transform .08s ease, filter .12s ease, box-shadow .08s ease; }
+.button-primary, .button-light { background: var(--duo-green); color: #fff; border-color: transparent;
+  border-bottom: 4px solid var(--duo-green-deep); box-shadow: none; }
+.button-primary:hover, .button-light:hover { filter: brightness(1.05); background: var(--duo-green); }
+.button-secondary { background: var(--surface); color: var(--duo-green-deep); border: 2px solid var(--line); border-bottom-width: 4px; }
+.button-secondary:hover { background: var(--surface-raised); color: var(--primary-deep); }
+.button-danger { background: var(--duo-red); color: #fff; border-bottom: 4px solid #d33131; }
+.button:active:not(:disabled) { transform: translateY(3px); }
+.button-primary:active:not(:disabled) { border-bottom-width: 1px; }
+.button-secondary:active:not(:disabled) { border-bottom-width: 2px; }
+.button-small { min-height: 40px; border-radius: 14px; }
+.text-link, .back-link { color: var(--duo-blue); font-weight: 900; }
+.text-link:hover, .back-link:hover { color: var(--duo-blue); filter: brightness(.92); }
+.icon-button { border-radius: 14px; border: 2px solid transparent; }
+.icon-button:hover { background: var(--surface-raised); border-color: var(--line); }
+
+/* --- Cards, panels, progress: hard-edged cartoon depth --- */
+.course-card, .continue-card, .collection-card, .person-card, .snapshot-panel, .notebook-panel,
+.settings-card, .featured-resume, .welcome-panel, .getting-started, .empty-state, .side-card,
+.course-hero, .collection-hero, .appearance-callout {
+  background: var(--surface); border: 2px solid var(--line); border-radius: 24px; box-shadow: 0 6px 0 var(--line); }
+html[data-theme="duo-night"] :is(.course-card, .continue-card, .collection-card, .person-card, .snapshot-panel,
+.notebook-panel, .settings-card, .featured-resume, .welcome-panel, .getting-started, .empty-state, .side-card,
+.course-hero, .collection-hero, .appearance-callout) { box-shadow: 0 6px 0 rgb(0 0 0 / 35%); }
+.course-card:hover, .continue-card:hover, .collection-card:hover { transform: translateY(-2px); border-color: var(--line-strong); }
+.featured-resume, .welcome-panel { background: linear-gradient(180deg, var(--feature) 0, var(--surface) 78%); }
+html[data-theme="duo-night"] :is(.featured-resume, .welcome-panel) { background: var(--surface); }
+.welcome-copy h2 { color: var(--primary-deep); }
+progress, .progress-track { height: 14px; border-radius: 999px; background: var(--surface-soft); overflow: hidden; }
+progress::-webkit-progress-bar { background: var(--surface-soft); border-radius: 999px; }
+progress::-webkit-progress-value { background: var(--duo-green); border-radius: 999px; }
+progress::-moz-progress-bar { background: var(--duo-green); border-radius: 999px; }
+.featured-progress::-webkit-progress-value { background: var(--duo-blue); }
+.featured-progress::-moz-progress-bar { background: var(--duo-blue); }
+.pill { background: var(--accent-soft); color: var(--feature-ink); border-radius: 999px; font-weight: 900; }
+.snapshot-completion strong { color: var(--primary-deep); font-family: var(--font-display); }
+.setup-steps li > span { background: var(--duo-green); color: #fff; border-radius: 50%; font-weight: 900;
+  box-shadow: 0 3px 0 var(--duo-green-deep); }
+.setup-steps li:nth-child(2) > span { background: var(--duo-blue); box-shadow: 0 3px 0 #1899d6; }
+.setup-steps li:nth-child(3) > span { background: var(--duo-purple); box-shadow: 0 3px 0 #a560e8; }
+.compact-play, .play-mark { background: var(--duo-green); color: #fff; border-radius: 50%; box-shadow: 0 4px 0 var(--duo-green-deep); }
+.appearance-icon, .settings-icon, .empty-icon, .collection-symbol, .collection-hero-mark {
+  background: var(--duo-green-soft); color: var(--feature-ink); border-radius: 16px; }
+html[data-theme="duo-night"] :is(.appearance-icon, .settings-icon, .empty-icon, .collection-symbol, .collection-hero-mark) { background: var(--accent-soft); }
+
+/* --- Course covers: bright book jackets in reward colours --- */
+.cover-tone-1 { --cover-bg: #58cc02; } .cover-tone-2 { --cover-bg: #1cb0f6; }
+.cover-tone-3 { --cover-bg: #ce82ff; } .cover-tone-4 { --cover-bg: #ff9600; }
+.course-cover, .list-cover, .continue-art { border-radius: 20px; }
+.duration-chip { background: var(--duo-yellow); color: #7a5c00; border-radius: 999px; font-weight: 900; }
+.course-category { color: var(--duo-blue); font-weight: 900; }
+
+/* --- Tabs, filters, forms --- */
+.filter-tab { border-radius: 999px; font-weight: 900; }
+.filter-tab.is-selected { background: var(--duo-green); color: #fff; box-shadow: 0 3px 0 var(--duo-green-deep); }
+.filter-tab.is-selected::after { display: none; }
+input, select, textarea { border-radius: 16px; }
+input:focus, select:focus, textarea:focus { border-color: var(--duo-blue) !important; box-shadow: 0 0 0 4px rgb(132 216 255 / .35); outline: none; }
+.switch-control > span { border: 2px solid var(--line-strong); }
+.switch-control input:checked + span { background: var(--duo-green); border-color: var(--duo-green-deep); }
+.theme-option[aria-pressed="true"], .theme-choice[aria-pressed="true"] { border: 2px solid var(--duo-blue); background: #ddf4ff; border-radius: 20px; }
+html[data-theme="duo-night"] :is(.theme-option[aria-pressed="true"], .theme-choice[aria-pressed="true"]) { background: var(--surface-soft); }
+.current-theme-swatch { background: var(--duo-green); border-radius: 50%; }
+
+/* --- Lessons & player: progress first, chunky rows --- */
+.lesson-row { border: 2px solid var(--line); border-radius: 18px; margin-bottom: 10px; background: var(--surface); }
+.lesson-row.is-current { background: var(--accent-soft); border-color: var(--primary); box-shadow: inset 4px 0 0 var(--duo-green); }
+.lesson-type-icon { background: var(--surface-soft); border-radius: 14px; color: var(--duo-blue); }
+.panel-tab[aria-selected="true"] { color: var(--primary-deep); border-bottom: 4px solid var(--duo-green); }
+.control-button { border-radius: 50%; }
+.control-button:hover { background: var(--duo-green); color: #fff; }
+.flash-message { border: 2px solid var(--line); border-radius: 16px; font-weight: 800; }
+.flash-message.success { background: var(--success-soft); color: var(--feature-ink); }
+.flash-message.error { background: var(--danger-soft); color: var(--danger); }
+.toast-message { border-radius: 16px; border: 2px solid var(--line); border-bottom-width: 4px; font-weight: 800; }
+
+/* Streak / reward detailing on real data only (counts, completion). */
+.snapshot-facts dd { font-family: var(--font-display); font-weight: 900; }
+.availability-label i { background: var(--duo-green); }
+.availability-label.offline i { background: var(--duo-red); }
+
+@media (max-width: 760px) {
+  .button { width: auto; min-height: 52px; }
+  .featured-actions .button, .welcome-copy .button { width: 100%; justify-content: center; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .button, .course-card, .continue-card, .collection-card { transition: none; }
+  .button:active:not(:disabled) { transform: none; }
+}

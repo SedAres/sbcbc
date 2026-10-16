@@ -1,0 +1,5 @@
+-r requirements.txt
+playwright>=1.50,<2.0
+Pillow>=11.0,<13.0
+# Optional: creates small sample videos without a system ffmpeg installation.
+imageio-ffmpeg>=0.6,<1.0

@@ -1,0 +1,6 @@
+{% extends 'base.html' %}
+{% block title %}Page not found{% endblock %}
+{% block breadcrumb %}<a href="{{ url_for('index') }}">My workspace</a><span class="context-separator">/</span><span>Page not found</span>{% endblock %}
+{% block content %}
+<div class="empty-state library-empty"><div class="empty-icon">{{ icon('book') }}</div><h1>Let’s find your next chapter.</h1><p>{{ message or 'This page or lesson isn’t available. It may have moved, or its course folder may be disconnected.' }}</p><a class="button button-primary" href="{{ url_for('courses') }}">Back to your library {{ icon('arrow-right') }}</a><a class="text-button" href="{{ url_for('index') }}">Go to dashboard</a></div>
+{% endblock %}

@@ -1,0 +1,7 @@
+/* Self-hosted Nunito (SIL OFL, see nunito-LICENSE.txt). No external requests.
+   The stack names din-round first per the Duolingo-style spec: devices that
+   already carry it use it; everyone else gets the shipped rounded Nunito. */
+@font-face { font-family: Nunito; font-style: normal; font-weight: 400; font-display: swap; src: url('nunito-latin-400-normal.woff2') format('woff2'); }
+@font-face { font-family: Nunito; font-style: normal; font-weight: 700; font-display: swap; src: url('nunito-latin-700-normal.woff2') format('woff2'); }
+@font-face { font-family: Nunito; font-style: normal; font-weight: 800; font-display: swap; src: url('nunito-latin-800-normal.woff2') format('woff2'); }
+@font-face { font-family: Nunito; font-style: normal; font-weight: 900; font-display: swap; src: url('nunito-latin-900-normal.woff2') format('woff2'); }
